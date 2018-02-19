@@ -265,10 +265,6 @@ void ADungeonGenerator2::OpenRoom(FRoomDungeon& Room)
 
 bool ADungeonGenerator2::CheckSill(int32 Row, int32 Col, const FPoint2D CheckDirection)
 {
-	if (Row < 3 || Col < 3 || Row >= DungeonWidth - 3 || Col >= DungeonHeight - 3) {
-		return false;
-	}
-
 	int32 DoorR = Row + CheckDirection.X;
 	int32 DoorC = Col + CheckDirection.Y;
 
@@ -284,6 +280,22 @@ bool ADungeonGenerator2::CheckSill(int32 Row, int32 Col, const FPoint2D CheckDir
 	}
 
 	return true;
+}
+
+void ADungeonGenerator2::CreateCorridors()
+{
+	for (int32 Row = 0; Row < DungeonWidth; ++Row) {
+		for (int32 Col = 0; Col < DungeonHeight; ++Col) {
+			if (DungeonData[Row][Col] & ROOM_DOOR) {
+				
+			}
+		}
+	}
+}
+
+void ADungeonGenerator2::Corridor(int32 Row, int32 Col, int32 LastDirection)
+{
+
 }
 
 void ADungeonGenerator2::PrintDungeon()

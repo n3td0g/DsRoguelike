@@ -120,6 +120,10 @@ private:
 	void OpenRoom(FRoomDungeon& Room);
 	bool CheckSill(int32 Row, int32 Col, const FPoint2D CheckDirection);
 
+	//Corridor
+	void CreateCorridors();
+	void Corridor(int32 Row, int32 Col, int32 LastDirection);
+
 	//Printing
 	UFUNCTION()
 	void PrintDungeon();
@@ -140,9 +144,6 @@ private:
 	UPROPERTY(Transient)
 	int32 LastCol;
 
-	
-
 	FDungeonLeaf* RootLeaf = nullptr;
-
 	int32** DungeonData;	
 };
