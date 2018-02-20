@@ -7,6 +7,8 @@ const FPoint2D FPoint2D::Up = FPoint2D(0, 1);
 const FPoint2D FPoint2D::Down = FPoint2D(0, -1);
 const FPoint2D FPoint2D::Left = FPoint2D(-1, 0);
 const FPoint2D FPoint2D::Right = FPoint2D(1, 0);
+const int32 FPoint2D::NumDirections = 4;
+const FPoint2D FPoint2D::AllDirections[4] = { FPoint2D::Up, FPoint2D::Right, FPoint2D::Down, FPoint2D::Left };
 
 #pragma optimize("", off)
 // Sets default values
@@ -76,6 +78,11 @@ void ADungeonGenerator2::GenerateDungeon()
 
 	//Print
 	PrintDungeon();
+}
+
+bool ADungeonGenerator2::IsLocationValid(const FPoint2D& Location) const
+{
+	return Location.X >= 0 && Location.Y >= 0 && Location.X < DungeonWidth && Location.Y < DungeonHeight;
 }
 
 void ADungeonGenerator2::CleanupDungeon()
@@ -226,6 +233,20 @@ void ADungeonGenerator2::CreateRoom(const FDungeonLeaf* Leaf)
 		}
 	}
 
+	for (int32 R = RoomX - 1; R <= RoomRight + 1; ++R) {
+		int32& DataTop = DungeonData[R][RoomTop + 1];
+		DataTop |= ROOM_PERIMETER;
+		int32& DataBottom = DungeonData[R][RoomY - 1];
+		DataBottom |= ROOM_PERIMETER;
+	}
+
+	for (int32 C = RoomY - 1; C <= RoomTop + 1; ++C) {
+		int32& DataLeft = DungeonData[RoomX - 1][C];
+		DataLeft |= ROOM_PERIMETER;
+		int32& DataRight = DungeonData[RoomRight + 1][C];
+		DataRight |= ROOM_PERIMETER;
+	}
+
 	Rooms.Push(FRoomDungeon(RoomX, RoomY, (RoomRight - RoomX) + 1, (RoomTop - RoomY) + 1));
 }
 
@@ -258,8 +279,36 @@ void ADungeonGenerator2::OpenRoom(FRoomDungeon& Room)
 		}
 	}
 
-	for (auto& Door : DoorPlaces) {
-		DungeonData[Door.X][Door.Y] |= ROOM_DOOR;
+	int32 NumDoors = FMath::RandRange(MinDoorsCount, MaxDoorsCount);
+	for (int32 I = 0; I < NumDoors; ++I) {
+		if (DoorPlaces.Num() == 0) {
+			break;
+		}
+		int32 DoorIndex = FMath::RandRange(0, DoorPlaces.Num() - 1);
+		const FPoint2D& DoorLocation = DoorPlaces[DoorIndex];		
+		DungeonData[DoorLocation.X][DoorLocation.Y] |= ROOM_DOOR;	
+
+		FRoomDoorInfo DoorInfo;
+		DoorInfo.Location = DoorLocation;
+
+		FPoint2D EntranceLocation;
+		for (auto& Direction : FPoint2D::AllDirections) {
+			EntranceLocation.X = DoorLocation.X + Direction.X;
+			EntranceLocation.Y = DoorLocation.Y + Direction.Y;
+			if (!IsLocationValid(EntranceLocation)) {
+				UE_LOG(LogTemp, Warning, TEXT("Ivalid location: %d; %d"), EntranceLocation.X, EntranceLocation.Y);
+				continue;
+			}
+			int32& Data = DungeonData[EntranceLocation.X][EntranceLocation.Y];
+			if (Data & ROOM_PERIMETER) {
+				DoorInfo.Direction = Direction;
+				Data |= ROOM_ENTRANCE;
+				break;
+			}
+		}
+
+		Room.Doors.Push(DoorInfo);
+		DoorPlaces.RemoveAt(DoorIndex);
 	}
 }
 
@@ -313,11 +362,14 @@ void ADungeonGenerator2::PrintDungeon()
 			else if (Data & ROOM_DOOR) {
 				C = 'D';
 			}
-			else if (Data & DUNGEON_ROOM) {
-				C = 'H';
+			else if (Data & ROOM_ENTRANCE) {
+				C = 'E';
 			}
 			else if (Data & ROOM_PERIMETER) {
-				C = 'X';
+				C = '/';
+			}					
+			else if (Data & DUNGEON_ROOM) {
+				C = '+';
 			}
 			DungeonRow.Append(FString::Printf(TEXT("%c"), C));
 			Index++;

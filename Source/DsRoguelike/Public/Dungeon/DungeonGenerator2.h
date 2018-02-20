@@ -38,6 +38,20 @@ struct FPoint2D
 	static const FPoint2D Down;
 	static const FPoint2D Left;
 	static const FPoint2D Right;
+	static const int32 NumDirections;
+	static const FPoint2D AllDirections[4];
+};
+
+USTRUCT(BlueprintType)
+struct FRoomDoorInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FPoint2D Location;
+
+	UPROPERTY(BlueprintReadOnly)
+	FPoint2D Direction;
 };
 
 USTRUCT(BlueprintType)
@@ -50,6 +64,9 @@ struct FRoomDungeon
 
 	UPROPERTY(BlueprintReadOnly)
 	FPoint2D Position;
+
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FRoomDoorInfo> Doors;
 
 	FRoomDungeon(int32 RoomX, int32 RoomY, int32 RoomWidth, int32 RoomHheight) :
 		Position(RoomX, RoomY), Size(RoomWidth, RoomHheight) {}
@@ -100,11 +117,17 @@ protected:
 	float MinRoomRatio = 0.6f;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Rooms", meta = (ClampMin = 1))
+	int32 MinDoorsCount = 2;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Rooms", meta = (ClampMin = 1))
 	int32 MaxDoorsCount = 4;
 
 	UPROPERTY(BlueprintReadOnly)
 	TArray<FRoomDungeon> Rooms;
 private:
+	UFUNCTION(BlueprintPure)
+	bool IsLocationValid(const FPoint2D& Location) const;
+
 	//Cleanup
 	UFUNCTION()
 	void CleanupDungeon();
