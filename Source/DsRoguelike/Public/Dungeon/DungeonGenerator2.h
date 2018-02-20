@@ -15,7 +15,8 @@
 #define ROOM_ENTRANCE		0x00000010
 #define ROOM_DOOR			0x00000020
 
-#define DOOR_BLOCKED		(ROOM_DOOR | DUNGEON_BLOCKED)
+#define BLOCK_DOOR		(ROOM_DOOR | DUNGEON_BLOCKED)
+#define BLOCK_CORRIDOR	( DUNGEON_BLOCKED | DUNGEON_ROOM | DUNGEON_CORRIDOR)
 
 struct FDungeonLeaf;
 
@@ -40,6 +41,8 @@ struct FPoint2D
 	static const FPoint2D Right;
 	static const int32 NumDirections;
 	static const FPoint2D AllDirections[4];
+
+	static int32 GetRandomDirectionIndex();
 };
 
 USTRUCT(BlueprintType)
@@ -52,6 +55,9 @@ struct FRoomDoorInfo
 
 	UPROPERTY(BlueprintReadOnly)
 	FPoint2D Direction;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 DirectionIndex;
 };
 
 USTRUCT(BlueprintType)
@@ -94,6 +100,9 @@ protected:
 	UFUNCTION()
 	void Initialize();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void DungeonGenerated();
+
 protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options", meta = (ClampMin = 10))
 	int32 DungeonWidth = 50;
@@ -122,11 +131,39 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Rooms", meta = (ClampMin = 1))
 	int32 MaxDoorsCount = 4;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Corridor")
+	float ChangeDirectionChance = 0.1f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Corridor")
+	bool bRemoveDeadEnds = true;
+
 	UPROPERTY(BlueprintReadOnly)
 	TArray<FRoomDungeon> Rooms;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Geometry")
+	UStaticMesh* WallMesh;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Geometry")
+	UStaticMesh* SeparatorMesh;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Geometry")
+	UStaticMesh* FloorMesh;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Geometry")
+	UStaticMesh* WindowMesh;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Geometry")
+	UStaticMesh* DoorMesh;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Geometry")
+	int32 CellSize = 400.0f;
 private:
 	UFUNCTION(BlueprintPure)
 	bool IsLocationValid(const FPoint2D& Location) const;
+	UFUNCTION(BlueprintPure)
+	bool IsPointValid(int32 Row, int32 Col) const;
+	UFUNCTION(BlueprintPure)
+	FVector GetRoomCenter(int32 RoomIndex);
 
 	//Cleanup
 	UFUNCTION()
@@ -142,14 +179,22 @@ private:
 	void OpenRooms();
 	void OpenRoom(FRoomDungeon& Room);
 	bool CheckSill(int32 Row, int32 Col, const FPoint2D CheckDirection);
+	void CheckRooms();
+	bool CheckRoom(FRoomDungeon& Room);
 
 	//Corridor
 	void CreateCorridors();
-	void Corridor(int32 Row, int32 Col, int32 LastDirection);
+	void CreateCorridor(int32 I, int32 J, int32 LastDirection);
+	bool CheckCorridor(int32 CorridorX, int32 CorridorY, const FPoint2D& Direction);
+	void RemoveDeadEnds();
+	void CollapseCorridor(int32 I, int32 J);
 
 	//Printing
 	UFUNCTION()
 	void PrintDungeon();
+
+	//Geomerty
+	void GenerateMeshes();
 
 private:
 	UPROPERTY(Transient)
