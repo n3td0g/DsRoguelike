@@ -10,12 +10,27 @@ public class DsRoguelikeEditor : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "DsRoguelike", "Core", "CoreUObject", "Engine", "PropertyEditor", "InputCore", "UnrealEd" });
 
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
-		
-		// Uncomment if you are using online features
-		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "AssetTools",
+                "Slate",
+                "SlateCore",
+                "GraphEditor",
+                "EditorStyle",
+                "Kismet",
+                "KismetWidgets",
+                "ApplicationCore",
+				// ... add private dependencies that you statically link with here ...
+			}
+            );
 
-		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
-	}
+        // Uncomment if you are using Slate UI
+        // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+
+        // Uncomment if you are using online features
+        // PrivateDependencyModuleNames.Add("OnlineSubsystem");
+
+        // To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
+    }
 }

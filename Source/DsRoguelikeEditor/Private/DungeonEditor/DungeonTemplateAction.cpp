@@ -1,5 +1,6 @@
 #include "DungeonTemplateAction.h"
 #include "Developer/AssetTools/Public/AssetTypeCategories.h"
+#include "AssetEditor_DungeonGraph.h"
 #include "DungeonTemplate.h"
 
 FText FDungeonTemplateAction::GetName() const
@@ -24,17 +25,16 @@ uint32 FDungeonTemplateAction::GetCategories()
 
 void FDungeonTemplateAction::OpenAssetEditor(const TArray<UObject *>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor /* = TSharedPtr<IToolkitHost>() */)
 {
-	/*const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
+	const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
 	for (auto ObjIt = InObjects.CreateConstIterator(); ObjIt; ++ObjIt)
 	{
 		UDungeonTemplate* PropData = Cast<UDungeonTemplate>(*ObjIt);
 		if (PropData)
 		{
-			TSharedRef<FCustAssetEditor> NewCustEditor(new FCustAssetEditor());
-
-			NewCustEditor->InitCustAssetEditor(Mode, EditWithinLevelEditor, PropData);
+			TSharedRef<FAssetEditor_DungeonGraph> NewCustEditor(new FAssetEditor_DungeonGraph());
+			NewCustEditor->InitDungeonGraphAssetEditor(Mode, EditWithinLevelEditor, PropData);
 		}
-	}*/
+	}
 }
 
 void FDungeonTemplateAction::RegistrateCustomPartAssetType()

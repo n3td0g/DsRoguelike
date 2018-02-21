@@ -10,7 +10,7 @@
  * 
  */
 UCLASS(Blueprintable)
-class UDungeonTemplate : public UObject
+class DSROGUELIKE_API UDungeonTemplate : public UObject
 {
 	GENERATED_BODY()
 	
