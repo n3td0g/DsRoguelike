@@ -275,7 +275,7 @@ void ADungeonGenerator2::CreateRoom(const FDungeonLeaf* Leaf)
 		}
 	}
 
-	for (int32 R = RoomX - 1; R <= RoomRight + 1; ++R) {
+	/*for (int32 R = RoomX - 1; R <= RoomRight + 1; ++R) {
 		int32& DataTop = DungeonData[R][RoomTop + 1];
 		DataTop |= ROOM_PERIMETER;
 		int32& DataBottom = DungeonData[R][RoomY - 1];
@@ -287,7 +287,7 @@ void ADungeonGenerator2::CreateRoom(const FDungeonLeaf* Leaf)
 		DataLeft |= ROOM_PERIMETER;
 		int32& DataRight = DungeonData[RoomRight + 1][C];
 		DataRight |= ROOM_PERIMETER;
-	}
+	}*/
 
 	Rooms.Push(FRoomDungeon(RoomX, RoomY, (RoomRight - RoomX) + 1, (RoomTop - RoomY) + 1));
 }
@@ -343,14 +343,13 @@ void ADungeonGenerator2::OpenRoom(FRoomDungeon& Room)
 				continue;
 			}
 			int32& Data = DungeonData[EntranceLocation.X][EntranceLocation.Y];
-			if (Data & ROOM_PERIMETER) {
-				DoorInfo.Direction = Direction;
-				DoorInfo.DirectionIndex = DirectionIndex;
-				Data |= ROOM_ENTRANCE;
-				Data &= ~ROOM_PERIMETER;
-				break;
+			if (Data & DUNGEON_ROOM) {
+				++DirectionIndex;
+				continue;
 			}
-			++DirectionIndex;
+			DoorInfo.Direction = Direction;
+			DoorInfo.DirectionIndex = DirectionIndex;
+			Data |= ROOM_ENTRANCE;
 		}
 
 		Room.Doors.Push(DoorInfo);
@@ -538,9 +537,6 @@ void ADungeonGenerator2::PrintDungeon()
 			else if (Data & ROOM_ENTRANCE) {
 				C = 'E';
 			}
-			else if (Data & ROOM_PERIMETER) {
-				C = ' ';
-			}					
 			else if (Data & DUNGEON_ROOM) {
 				C = '-';
 			}
