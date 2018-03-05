@@ -31,6 +31,9 @@ public:
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	// End of FSerializableObject interface
 
+protected:
+	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
+
 private:
 	UDungeonTemplate* DungeonTemplate;
 };

@@ -616,15 +616,6 @@ void ADungeonGenerator2::GenerateMeshes()
 				}
 			}
 			else {
-				if (Data == DUNGEON_NOTHING) {
-					//Check left-top
-
-					//Check right-top
-
-					//Check left-bottom
-
-					//Check left-bottom
-				}
 				continue;
 			}
 			auto Floor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), CellPosition, FRotator::ZeroRotator);

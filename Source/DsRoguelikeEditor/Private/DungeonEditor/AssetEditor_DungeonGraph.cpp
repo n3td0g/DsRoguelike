@@ -1,4 +1,5 @@
 #include "AssetEditor_DungeonGraph.h"
+#include "Framework/Docking/TabManager.h"
 
 const FName DungeonTemplateEditorAppName = FName(TEXT("DungeonTemplateEditorApp"));
 
@@ -80,7 +81,15 @@ void FAssetEditor_DungeonGraph::InitDungeonGraphAssetEditor(const EToolkitMode::
 
 void FAssetEditor_DungeonGraph::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
 {
+	auto WorkspaceMenuCategory = TabManager->AddLocalWorkspaceMenuCategory(FText::FromString("Custom Editor"));
+	//auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
+	FAssetEditorToolkit::RegisterTabSpawners(TabManager);
+
+	TabManager->RegisterTabSpawner(FDungeonTemplateAssetEditorTabs::ViewportID, FOnSpawnTab::CreateSP(this, &FAssetEditor_DungeonGraph::SpawnTab_Viewport))
+		.SetDisplayName(FText::FromString("Viewport"))
+		.SetGroup(WorkspaceMenuCategory)
+		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Viewports"));
 }
 
 void FAssetEditor_DungeonGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
@@ -136,5 +145,19 @@ void FAssetEditor_DungeonGraph::SaveAsset_Execute()
 void FAssetEditor_DungeonGraph::AddReferencedObjects(FReferenceCollector& Collector)
 {
 
+}
+
+TSharedRef<SDockTab> FAssetEditor_DungeonGraph::SpawnTab_Viewport(const FSpawnTabArgs& Args)
+{
+	return SNew(SDockTab)
+		.Label(FText::FromString("Dungeon Graph"))
+		.TabColorScale(GetTabColorScale());
+
+	/*
+
+		[
+			GraphEditor.ToSharedRef()
+		]
+	*/
 }
 
