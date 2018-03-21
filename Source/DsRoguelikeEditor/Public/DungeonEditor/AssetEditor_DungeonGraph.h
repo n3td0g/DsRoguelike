@@ -34,6 +34,15 @@ public:
 protected:
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 
+	void CreateInternalWidgets();
+	TSharedRef<SGraphEditor> CreateViewportWidget();
+
+	void CreateEdGraph();
+
 private:
 	UDungeonTemplate* DungeonTemplate;
+
+	TSharedPtr<SGraphEditor> ViewportWidget;
+	TSharedPtr<class IDetailsView> PropertyWidget;
+	TSharedPtr<class IDetailsView> EditorSettingsWidget;
 };

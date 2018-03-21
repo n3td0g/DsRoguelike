@@ -16,7 +16,11 @@
 		{
 			"Name": "DsRoguelikeEditor",
 			"Type": "Editor",
-			"LoadingPhase":  "PostEngineInit"
+			"LoadingPhase": "PostEngineInit",
+			"AdditionalDependencies": [
+				"CoreUObject",
+				"Engine"
+			]
 		}
 	]
 }

@@ -3,6 +3,8 @@
 #include "DsRoguelikeEditor.h"
 #include "Modules/ModuleManager.h"
 #include "DungeonTemplateAction.h"
+#include "GraphPanelNodeFactory_DungeonTemplate.h"
+#include "EdGraphUtilities.h"
 
 IMPLEMENT_GAME_MODULE(FDsRoguelikeEditorModule, DsRoguelikeEditor);
 
@@ -13,9 +15,14 @@ DEFINE_LOG_CATEGORY(DsRoguelikeEditor)
 void FDsRoguelikeEditorModule::StartupModule()
 {
 	UE_LOG(DsRoguelikeEditor, Warning, TEXT("MyGameEditor: Log Started"));
-#if WITH_EDITORONLY_DATA
+//#if WITH_EDITORONLY_DATA
+	//Registrate asset actions for DungeonTemplate
 	FDungeonTemplateAction::RegistrateCustomPartAssetType();
-#endif
+
+	// Register custom graph nodes
+	TSharedPtr<FGraphPanelNodeFactory> GraphPanelNodeFactory = MakeShareable(new FGraphPanelNodeFactory_DungeonTemplate);
+	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory);
+//#endif
 }
 
 void FDsRoguelikeEditorModule::ShutdownModule()

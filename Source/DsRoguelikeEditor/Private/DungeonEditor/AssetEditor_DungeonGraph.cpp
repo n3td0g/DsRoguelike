@@ -1,5 +1,12 @@
 #include "AssetEditor_DungeonGraph.h"
+#include "IDetailsView.h"
+#include "PropertyEditorModule.h"
+#include "EdGraph_DungeonTemplate.h"
+#include "Editor/UnrealEd/Public/Kismet2/BlueprintEditorUtils.h"
 #include "Framework/Docking/TabManager.h"
+#include "GraphSchema_DungeonTemplate.h"
+
+#define LOCTEXT_NAMESPACE "FAssetEditor_DungeonGraph"
 
 const FName DungeonTemplateEditorAppName = FName(TEXT("DungeonTemplateEditorApp"));
 
@@ -32,6 +39,10 @@ FAssetEditor_DungeonGraph::~FAssetEditor_DungeonGraph()
 void FAssetEditor_DungeonGraph::InitDungeonGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UDungeonTemplate* Graph)
 {
 	DungeonTemplate = Graph;
+
+	CreateEdGraph();
+	CreateInternalWidgets();
+
 	// Layout
 	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("DungeonGraph_Layout")
 		->AddArea
@@ -94,7 +105,11 @@ void FAssetEditor_DungeonGraph::RegisterTabSpawners(const TSharedRef<FTabManager
 
 void FAssetEditor_DungeonGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
 {
+	FAssetEditorToolkit::UnregisterTabSpawners(TabManager);
 
+	TabManager->UnregisterTabSpawner(FDungeonTemplateAssetEditorTabs::ViewportID);
+	TabManager->UnregisterTabSpawner(FDungeonTemplateAssetEditorTabs::DungeonTemplatePropertyID);
+	TabManager->UnregisterTabSpawner(FDungeonTemplateAssetEditorTabs::DungeonTemplateEditorSettingsID);
 }
 
 FName FAssetEditor_DungeonGraph::GetToolkitFName() const
@@ -144,20 +159,73 @@ void FAssetEditor_DungeonGraph::SaveAsset_Execute()
 
 void FAssetEditor_DungeonGraph::AddReferencedObjects(FReferenceCollector& Collector)
 {
-
+	Collector.AddReferencedObject(DungeonTemplate);
 }
 
 TSharedRef<SDockTab> FAssetEditor_DungeonGraph::SpawnTab_Viewport(const FSpawnTabArgs& Args)
 {
-	return SNew(SDockTab)
-		.Label(FText::FromString("Dungeon Graph"))
-		.TabColorScale(GetTabColorScale());
+	check(Args.GetTabId() == FDungeonTemplateAssetEditorTabs::ViewportID);
 
-	/*
+	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
+		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
 
-		[
-			GraphEditor.ToSharedRef()
-		]
-	*/
+	if (ViewportWidget.IsValid())
+	{
+		SpawnedTab->SetContent(ViewportWidget.ToSharedRef());
+	}
+
+	return SpawnedTab;
+}
+
+void FAssetEditor_DungeonGraph::CreateInternalWidgets()
+{
+	ViewportWidget = CreateViewportWidget();
+
+	FDetailsViewArgs Args;
+	Args.bHideSelectionTip = true;
+	Args.NotifyHook = this;
+
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	PropertyWidget = PropertyModule.CreateDetailView(Args);
+	PropertyWidget->SetObject(DungeonTemplate);
+	//PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_GenericGraph::OnFinishedChangingProperties);
+
+	EditorSettingsWidget = PropertyModule.CreateDetailView(Args);
+	//EditorSettingsWidget->SetObject(GenricGraphEditorSettings);
+}
+
+TSharedRef<SGraphEditor> FAssetEditor_DungeonGraph::CreateViewportWidget()
+{
+	FGraphAppearanceInfo AppearanceInfo;
+	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_DungeonTemplate", "Dungeon Template");
+
+	//CreateCommandList();
+
+	SGraphEditor::FGraphEditorEvents InEvents;
+	//InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FAssetEditor_GenericGraph::OnSelectedNodesChanged);
+	//InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FAssetEditor_GenericGraph::OnNodeDoubleClicked);
+
+	return SNew(SGraphEditor)
+		//.AdditionalCommands(GraphEditorCommands)
+		.IsEditable(true)
+		.Appearance(AppearanceInfo)
+		.GraphToEdit(DungeonTemplate->EdGraph)
+		.GraphEvents(InEvents);
+		/*.AutoExpandActionMenu(true)
+		.ShowGraphStateOverlay(false);*/
+}
+
+void FAssetEditor_DungeonGraph::CreateEdGraph()
+{
+	if (DungeonTemplate->EdGraph == nullptr)
+	{
+		DungeonTemplate->EdGraph = CastChecked<UEdGraph_DungeonTemplate>(FBlueprintEditorUtils::CreateNewGraph(DungeonTemplate, NAME_None, UEdGraph_DungeonTemplate::StaticClass(), UGraphSchema_DungeonTemplate::StaticClass()));
+		DungeonTemplate->EdGraph->bAllowDeletion = false;
+
+		// Give the schema a chance to fill out any required nodes (like the results node)
+		const UEdGraphSchema* Schema = DungeonTemplate->EdGraph->GetSchema();
+		Schema->CreateDefaultNodesForGraph(*DungeonTemplate->EdGraph);
+	}
+
 }
 
