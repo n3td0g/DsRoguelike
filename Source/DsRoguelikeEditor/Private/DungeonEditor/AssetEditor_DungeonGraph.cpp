@@ -42,6 +42,9 @@ void FAssetEditor_DungeonGraph::InitDungeonGraphAssetEditor(const EToolkitMode::
 	DungeonTemplate = Graph;
 
 	CreateEdGraph();
+
+	FGenericCommands::Register();
+
 	CreateInternalWidgets();
 
 	// Layout
