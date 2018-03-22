@@ -3,6 +3,9 @@
 #include "MarkerGraphNode.h"
 #include "MarkerNode.h"
 #include "DungeonTemplatePin.h"
+#include "EdGraph_DungeonTemplate.h"
+#include "DungeonTemplate.h"
+#include "SInlineEditableTextBlock.h"
 
 void SGraphNode_MarkerNode::Construct(const FArguments& InArgs, UMarkerGraphNode* InNode)
 {
@@ -101,12 +104,51 @@ void SGraphNode_MarkerNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 
 bool SGraphNode_MarkerNode::IsNameReadOnly() const
 {
-	return true;
+	return false;
 }
 
 const FSlateBrush* SGraphNode_MarkerNode::GetNameIcon() const
 {
 	return FEditorStyle::GetBrush(TEXT("Graph.StateNode.Icon"));
+}
+
+void SGraphNode_MarkerNode::OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo)
+{
+	SGraphNode::OnNameTextCommited(InText, CommitInfo);
+
+	auto EdNode_Node = Cast<UMarkerGraphNode>(GraphNode);
+	if (!EdNode_Node) {
+		return;
+	}
+
+	auto DungeonGraph = Cast<UEdGraph_DungeonTemplate>(EdNode_Node->GetGraph());
+	if (!DungeonGraph) {
+		return;
+	}
+
+	auto DungeonTemplate = DungeonGraph->GetDungeonTemplate();
+	if (!DungeonTemplate) {
+		return;
+	}
+
+	const FName NewName = *(InText.ToString());
+
+	if (DungeonTemplate->IsNameOccupied(NewName)) {
+		return;
+	}
+	
+	if (MarkerNode && MarkerNode->MarkerNode)
+	{
+		MarkerNode->Modify();
+		MarkerNode->MarkerNode->Modify();
+		DungeonTemplate->Modify();
+
+		DungeonTemplate->MarkerNodes.Remove(MarkerNode->MarkerNode->MarkerName);
+		MarkerNode->MarkerNode->MarkerName = NewName;
+		DungeonTemplate->MarkerNodes.Add(NewName, MarkerNode->MarkerNode);
+
+		UpdateGraphNode();
+	}
 }
 
 void SGraphNode_MarkerNode::CreateNodeWidget()
@@ -136,6 +178,8 @@ void SGraphNode_MarkerNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 {
 	const FSlateBrush* NodeTypeIcon = GetNameIcon();
 
+	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+
 	NodeBox->AddSlot()
 	.AutoHeight()
 	[
@@ -151,9 +195,22 @@ void SGraphNode_MarkerNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 		+ SHorizontalBox::Slot()
 		.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 		[
-			SNew(STextBlock)
-			.Text(MarkerNode->GetNodeTitle(ENodeTitleType::FullTitle))
-			.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 16))
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+				.Style(FEditorStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+				.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+				.OnVerifyTextChanged(this, &SGraphNode_MarkerNode::OnVerifyNameTextChanged)
+				.OnTextCommitted(this, &SGraphNode_MarkerNode::OnNameTextCommited)
+				.IsSelected(this, &SGraphNode_MarkerNode::IsSelectedExclusively)
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				NodeTitle.ToSharedRef()
+			]
 		]
 	];
 }

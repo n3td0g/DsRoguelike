@@ -15,7 +15,10 @@ class DSROGUELIKE_API UStaticMeshNode : public UVisualNode
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Visual")
+	virtual void Process(const FTransform& MarkerTransform, UWorld* World) override;
+	
+public:
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Visual")
 	UStaticMesh* StaticMesh;
 
 private:	

@@ -51,12 +51,16 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsCoordsValid(int32 X, int32 Y) const;
 
+public:
+	TMap<FName, TArray<FDungeonMarker>> Markers;
+
 protected:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "PlaceMarkers"))
 	void ReceivePlaceMarkers();
 	
 	virtual void EmptyDungeon();
 	void CleanDungeon();
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	ADungeon* Dungeon;
@@ -69,8 +73,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	FDungeonBuilderConfig BuilderConfig;
-
-	TMap<FName, TArray<FDungeonMarker>> Markers;
+	
 
 	int32** DungeonGrid;
 };

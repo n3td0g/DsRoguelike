@@ -101,6 +101,11 @@ void FAssetEditor_DungeonGraph::RegisterTabSpawners(const TSharedRef<FTabManager
 		.SetDisplayName(FText::FromString("Viewport"))
 		.SetGroup(WorkspaceMenuCategory)
 		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Viewports"));
+
+	TabManager->RegisterTabSpawner(FDungeonTemplateAssetEditorTabs::DungeonTemplatePropertyID, FOnSpawnTab::CreateSP(this, &FAssetEditor_DungeonGraph::SpawnTab_Details))
+		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
+		.SetGroup(WorkspaceMenuCategory)
+		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
 }
 
 void FAssetEditor_DungeonGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
@@ -154,7 +159,12 @@ FString FAssetEditor_DungeonGraph::GetDocumentationLink() const
 
 void FAssetEditor_DungeonGraph::SaveAsset_Execute()
 {
+	/*if (DungeonTemplate != nullptr)
+	{
+		RebuildGenericGraph();
+	}*/
 
+	FAssetEditorToolkit::SaveAsset_Execute();
 }
 
 void FAssetEditor_DungeonGraph::AddReferencedObjects(FReferenceCollector& Collector)
@@ -175,6 +185,18 @@ TSharedRef<SDockTab> FAssetEditor_DungeonGraph::SpawnTab_Viewport(const FSpawnTa
 	}
 
 	return SpawnedTab;
+}
+
+TSharedRef<SDockTab> FAssetEditor_DungeonGraph::SpawnTab_Details(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FDungeonTemplateAssetEditorTabs::DungeonTemplatePropertyID);
+
+	return SNew(SDockTab)
+		.Icon(FEditorStyle::GetBrush("LevelEditor.Tabs.Details"))
+		.Label(LOCTEXT("Details_Title", "Property"))
+		[
+			PropertyWidget.ToSharedRef()
+		];
 }
 
 void FAssetEditor_DungeonGraph::CreateInternalWidgets()
@@ -202,7 +224,7 @@ TSharedRef<SGraphEditor> FAssetEditor_DungeonGraph::CreateViewportWidget()
 	//CreateCommandList();
 
 	SGraphEditor::FGraphEditorEvents InEvents;
-	//InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FAssetEditor_GenericGraph::OnSelectedNodesChanged);
+	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FAssetEditor_DungeonGraph::OnSelectedNodesChanged);
 	//InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FAssetEditor_GenericGraph::OnNodeDoubleClicked);
 
 	return SNew(SGraphEditor)
@@ -226,6 +248,32 @@ void FAssetEditor_DungeonGraph::CreateEdGraph()
 		const UEdGraphSchema* Schema = DungeonTemplate->EdGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*DungeonTemplate->EdGraph);
 	}
+}
 
+void FAssetEditor_DungeonGraph::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
+{
+	TArray<UObject*> Selection;
+
+	for (UObject* SelectionEntry : NewSelection)
+	{
+		Selection.Add(SelectionEntry);
+	}
+
+	if (Selection.Num() == 0)
+	{
+		PropertyWidget->SetObject(DungeonTemplate);
+	}
+	else
+	{
+		PropertyWidget->SetObjects(Selection);
+	}
+}
+
+void FAssetEditor_DungeonGraph::OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (DungeonTemplate == nullptr)
+		return;
+
+	DungeonTemplate->EdGraph->GetSchema()->ForceVisualizationCacheClear();
 }
 

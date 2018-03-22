@@ -21,6 +21,7 @@ public:
 
 	virtual void PinConnectionListChanged(UEdGraphPin * Pin) override;
 public:
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Marker")
 	class UMarkerNode* MarkerNode;
 
 };

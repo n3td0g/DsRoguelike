@@ -30,6 +30,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void CreateDungeonVisual();
+
 protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dungeon")
 	TSubclassOf<UDungeonBuilder> BuilderClass;

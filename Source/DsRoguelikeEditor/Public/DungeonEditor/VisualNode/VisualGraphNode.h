@@ -21,7 +21,7 @@ public:
 	virtual FLinearColor GetNodeTitleColor() const override;
 
 public:
-
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Visual Node")
 	class UVisualNode* VisualNode;
 	
 };

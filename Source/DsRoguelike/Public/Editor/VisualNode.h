@@ -22,6 +22,8 @@ class DSROGUELIKE_API UVisualNode : public UObject
 	GENERATED_BODY()
 public:
 	static FString GetNodeName(EVisualNodeType Type);
+
+	virtual void Process(const FTransform& MarkerTransform, UWorld* World) {}
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Transform")

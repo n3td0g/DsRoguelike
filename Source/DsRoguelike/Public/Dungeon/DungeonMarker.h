@@ -9,7 +9,4 @@ struct FDungeonMarker
 	
 	UPROPERTY(BlueprintReadOnly)
 	FTransform Transform;
-
-	UPROPERTY(BlueprintReadOnly)
-	FIntPoint Cell;
 };

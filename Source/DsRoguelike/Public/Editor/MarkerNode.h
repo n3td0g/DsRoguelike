@@ -15,18 +15,18 @@ class DSROGUELIKE_API UMarkerNode : public UObject
 	
 public:
 	UMarkerNode();
-	virtual ~UMarkerNode();
+	virtual ~UMarkerNode();	
+public:
 
-	UPROPERTY(VisibleDefaultsOnly, Category = "MarkerNode")
-	UDungeonTemplate* DungeonTemplate;
+	UPROPERTY(BlueprintReadOnly, Category = "MarkerNode")
+	UDungeonTemplate* DungeonTemplate;	
 
-	UPROPERTY(VisibleAnywhere, Category = "MarkerNode")
-	FName MarkerName;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = "Visual")
+	UPROPERTY(BlueprintReadOnly, Category = "Visual")
 	TArray<class UVisualNode*> VisualNodes;
 
+	UPROPERTY(BlueprintReadOnly, Category = "MarkerNode")
+	FName MarkerName;
+
 protected:
-	
 	
 };

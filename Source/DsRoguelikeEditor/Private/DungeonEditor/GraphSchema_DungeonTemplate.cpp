@@ -7,7 +7,7 @@
 #include "MarkerGraphNode.h"
 #include "VisualGraphNode.h"
 #include "EmitterGraphNode.h"
-#include "VisualNode.h"
+#include "StaticMeshNode.h"
 #include "MarkerNode.h"
 #include "ConnectionDrawingPolicy_DungeonGraph.h"
 #include "EdGraph/EdGraph.h"
@@ -73,7 +73,17 @@ UEdGraphNode* FCustomSchemaAction_NewVisualNode::SpawnNode(UEdGraph* ParentGraph
 		return nullptr;
 	}
 
-	UVisualNode* VisualNode = NewObject<UVisualNode>(DungeonTemplate, UVisualNode::StaticClass());
+	UVisualNode* VisualNode;
+
+	switch (NodeType) {
+	case EVisualNodeType::StaticMesh:
+		VisualNode = NewObject<UVisualNode>(DungeonTemplate, UStaticMeshNode::StaticClass());
+		break;	
+	default:
+		VisualNode = NewObject<UVisualNode>(DungeonTemplate, UVisualNode::StaticClass());
+		break;
+	}
+
 	VisualGraphNode->VisualNode = VisualNode;
 
 	return VisualGraphNode;

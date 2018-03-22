@@ -3,7 +3,9 @@
 #include "Dungeon.h"
 #include "DungeonTemplate.h"
 #include "DungeonBuilder.h"
-
+#include "MarkerNode.h"
+#include "VisualNode.h"
+#include "DungeonMarker.h"
 
 // Sets default values
 ADungeon::ADungeon()
@@ -26,6 +28,33 @@ void ADungeon::BeginPlay()
 	
 }
 
+void ADungeon::CreateDungeonVisual()
+{
+	if (Templates.Num() == 0) {
+		return;
+	}
+	auto Template = Templates[0];
+	if (!Template) {
+		return;
+	}
+
+	for (auto& Marker : Builder->Markers) {
+		auto MarkerNodeRef = Template->MarkerNodes.Find(Marker.Key);
+		if (MarkerNodeRef) {
+			auto MarkerNode = (*MarkerNodeRef);
+			if (MarkerNode) {
+				for (const auto& DungeonMarker : Marker.Value) {
+					for (auto VisualNode : MarkerNode->VisualNodes) {
+						if (VisualNode) {
+							VisualNode->Process(DungeonMarker.Transform, GWorld);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void ADungeon::CreateDungeon()
 {
 	if (!BuilderClass) {
@@ -35,5 +64,6 @@ void ADungeon::CreateDungeon()
 	Builder = BuilderClass->GetDefaultObject<UDungeonBuilder>();
 	Builder->GenerateDungeon(this);
 	Builder->PlaceMarkers();
-}
 
+	CreateDungeonVisual();
+}

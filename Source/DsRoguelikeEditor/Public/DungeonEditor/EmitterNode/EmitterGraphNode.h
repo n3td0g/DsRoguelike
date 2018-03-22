@@ -20,5 +20,6 @@ public:
 	virtual FLinearColor GetNodeTitleColor() const override;
 
 public:
+	UPROPERTY(VisibleAnywhere, Category = "Marker Emitter")
 	FName MarkerName;
 };

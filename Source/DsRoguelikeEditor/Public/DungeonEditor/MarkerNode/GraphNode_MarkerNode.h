@@ -20,6 +20,8 @@ public:
 	virtual bool IsNameReadOnly() const override;
 
 	virtual const FSlateBrush* GetNameIcon() const;	
+
+	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 protected:
 	virtual void CreateNodeWidget();
 	virtual void AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox);

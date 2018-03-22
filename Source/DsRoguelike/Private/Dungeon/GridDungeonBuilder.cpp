@@ -281,16 +281,23 @@ void UGridDungeonBuilder::PrintDungeon()
 
 void UGridDungeonBuilder::PlaceFloorMarkers()
 {
-	FDungeonMarker Marker;
-	Marker.Transform = FTransform::Identity;
-	auto FloorMarkers = Markers.Add(TEXT("Floor"));
+	FDungeonMarker FloorMarker;
+	FDungeonMarker WallMarker;
+
+	FloorMarker.Transform = FTransform::Identity;
+	FloorMarker.Transform = FTransform::Identity;
+
+	auto& FloorMarkers = Markers.Add(TEXT("Floor"));
+	auto& WallMarkers = Markers.Add(TEXT("Wall"));
+
 	for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J) {
 		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
 			int32& Data = DungeonGrid[I][J];
 			if (Data & DUNGEON_ROOM) {
-				Marker.Cell = FIntPoint(I, J);
-				Marker.Transform.SetLocation(FVector((I + 0.5f) * BuilderConfig.CellSize, (J + 0.5f) * BuilderConfig.CellSize, 0.0f));
-				FloorMarkers.Push(Marker);
+				FloorMarker.Transform.SetLocation(FVector((I + 0.5f) * BuilderConfig.CellSize, (J + 0.5f) * BuilderConfig.CellSize, 0.0f));
+				FloorMarkers.Push(FloorMarker);
+
+				
 			}
 		}
 	}
