@@ -3,6 +3,7 @@
 #include "GraphSchema_DungeonTemplate.h"
 #include "EdGraph_DungeonTemplate.h"
 #include "ConnectionDrawingPolicy.h"
+#include "GenericCommands.h"
 #include "DungeonTemplate.h"
 #include "MarkerGraphNode.h"
 #include "VisualGraphNode.h"
@@ -145,7 +146,16 @@ void UGraphSchema_DungeonTemplate::GetGraphContextActions(FGraphContextMenuBuild
 
 void UGraphSchema_DungeonTemplate::GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging) const
 {
+	if (InGraphNode != nullptr)
+	{
+		MenuBuilder->BeginSection("GenericGraphAssetGraphSchemaNodeActions", FText::FromString(TEXT("Node Actions")));
+		{
+			MenuBuilder->AddMenuEntry(FGenericCommands::Get().Delete);
+		}
+		MenuBuilder->EndSection();
+	}
 
+	Super::GetContextMenuActions(CurrentGraph, InGraphNode, InGraphPin, MenuBuilder, bIsDebugging);
 }
 
 const FPinConnectionResponse UGraphSchema_DungeonTemplate::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const

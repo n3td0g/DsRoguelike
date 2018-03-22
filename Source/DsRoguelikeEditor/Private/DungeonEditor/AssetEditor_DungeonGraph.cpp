@@ -1,5 +1,6 @@
 #include "AssetEditor_DungeonGraph.h"
 #include "IDetailsView.h"
+#include "GenericCommands.h"
 #include "PropertyEditorModule.h"
 #include "EdGraph_DungeonTemplate.h"
 #include "Editor/UnrealEd/Public/Kismet2/BlueprintEditorUtils.h"
@@ -88,6 +89,16 @@ void FAssetEditor_DungeonGraph::InitDungeonGraphAssetEditor(const EToolkitMode::
 	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, DungeonTemplateEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, Graph, false);
 
 	RegenerateMenusAndToolbars();
+}
+
+void FAssetEditor_DungeonGraph::DeleteSelectedNodes()
+{
+
+}
+
+bool FAssetEditor_DungeonGraph::CanDeleteNodes()
+{
+	return true;
 }
 
 void FAssetEditor_DungeonGraph::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
@@ -221,7 +232,7 @@ TSharedRef<SGraphEditor> FAssetEditor_DungeonGraph::CreateViewportWidget()
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_DungeonTemplate", "Dungeon Template");
 
-	//CreateCommandList();
+	CreateCommandList();
 
 	SGraphEditor::FGraphEditorEvents InEvents;
 	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FAssetEditor_DungeonGraph::OnSelectedNodesChanged);
@@ -248,6 +259,21 @@ void FAssetEditor_DungeonGraph::CreateEdGraph()
 		const UEdGraphSchema* Schema = DungeonTemplate->EdGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*DungeonTemplate->EdGraph);
 	}
+}
+
+void FAssetEditor_DungeonGraph::CreateCommandList()
+{
+	if (GraphEditorCommands.IsValid())
+	{
+		return;
+	}
+
+	GraphEditorCommands = MakeShareable(new FUICommandList);
+
+	GraphEditorCommands->MapAction(FGenericCommands::Get().Delete,
+		FExecuteAction::CreateRaw(this, &FAssetEditor_DungeonGraph::DeleteSelectedNodes),
+		FCanExecuteAction::CreateRaw(this, &FAssetEditor_DungeonGraph::CanDeleteNodes)
+	);
 }
 
 void FAssetEditor_DungeonGraph::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
