@@ -11,7 +11,8 @@
 #define ROOM_VISITED		0x00000010
 
 #define BLOCK_DOOR		( ROOM_DOOR )
-#define BLOCK_CORRIDOR	( DUNGEON_ROOM | DUNGEON_CORRIDOR)
+#define BLOCK_CORRIDOR	( DUNGEON_ROOM | DUNGEON_CORRIDOR )
+#define DUNGEON_FLOOR	( DUNGEON_ROOM | DUNGEON_CORRIDOR )
 
 USTRUCT()
 struct FDungeonLeaf
@@ -86,7 +87,16 @@ protected:
 
 	//Markers temp
 	void PlaceFloorMarkers();
+
+	FORCEINLINE const int32 GetRandomDirectionIndex();
 protected:
+	static const FIntPoint DirectionUp;
+	static const FIntPoint DirectionRight;
+	static const FIntPoint DirectionDown;
+	static const FIntPoint DirectionLeft;
+	static const int32 NumDirections;
+	static const FIntPoint AllDirections[4];
+
 	FDungeonLeaf* RootLeaf;
 
 	UPROPERTY(Transient)

@@ -41,4 +41,7 @@ struct FDungeonBuilderConfig
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Corridor")
 	bool bRemoveDeadEnds = true;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Walls")
+	float WallThickness = 50.0f;
 };
