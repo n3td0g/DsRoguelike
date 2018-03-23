@@ -2,6 +2,8 @@
 
 #include "GridDungeonBuilder.h"
 
+#pragma optimize("", off)
+
 const FIntPoint UGridDungeonBuilder::DirectionUp = FIntPoint(0, 1);
 const FIntPoint UGridDungeonBuilder::DirectionDown = FIntPoint(0, -1);
 const FIntPoint UGridDungeonBuilder::DirectionLeft = FIntPoint(-1, 0);
@@ -496,7 +498,8 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 	auto& SeparatorMarkers = Markers.Add(TEXT("Separator"));
 
 	float HalfCellSize = BuilderConfig.CellSize * 0.5f;
-	float SizeWithWall = HalfCellSize - BuilderConfig.WallThickness * 0.5f;
+	float HalfWallThickness = BuilderConfig.WallThickness * 0.5f;
+	float SizeWithWall = HalfCellSize - HalfWallThickness;
 
 	const FVector SeparatorOffsets[4] = {
 		FVector(HalfCellSize, HalfCellSize, 0.0f),
@@ -514,7 +517,6 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 				FloorMarkers.Push(FloorMarker);
 				FRotator Rotation = FRotator::ZeroRotator;
 				int32 SeparatorIndex = 0;
-
 				for (const auto& Direction : UGridDungeonBuilder::AllDirections) {
 					int32 Row = I + Direction.X;
 					int32 Col = J + Direction.Y;
@@ -538,12 +540,14 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 								}
 							}
 							else {
-								WallMarkers.Push(WallMarker);
-								SeparatorMarkers.Push(SeparatorMarker);
+								WallMarkers.Push(WallMarker);								
 							}
+							PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
+							SeparatorMarkers.Push(SeparatorMarker);
 						}
 					}
 					else {
+						PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
 						SeparatorMarkers.Push(SeparatorMarker);
 						WallMarkers.Push(WallMarker);
 					}
@@ -556,7 +560,54 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 	}
 }
 
+void UGridDungeonBuilder::PlaceSeparatorMarker(FDungeonMarker& Marker, int32 I, int32 J, int32 DirectionIndex, const float& HalfWallThickness)
+{
+	int32 NextDirectionIndex = (DirectionIndex + 1) % UGridDungeonBuilder::NumDirections;
+	const FIntPoint& NextDirection = UGridDungeonBuilder::AllDirections[NextDirectionIndex];
+	const FIntPoint& CurrentDirection = UGridDungeonBuilder::AllDirections[DirectionIndex];
+	FIntPoint DiagonalDirection = NextDirection + CurrentDirection;
+
+	const int32& CurrentCell = DungeonGrid[I][J];
+	int32 CellType = CurrentCell & DUNGEON_FLOOR;
+
+	FVector MarkerLocation = Marker.Transform.GetLocation();
+
+	int32 NextRow = I + NextDirection.X;
+	int32 NextCol = J + NextDirection.Y;
+
+	int32 DiagonalRow = I + DiagonalDirection.X;
+	int32 DiagonalCol = J + DiagonalDirection.Y;
+
+	if (IsCoordsValid(NextRow, NextCol)) {
+		const int32& NextCell = DungeonGrid[NextRow][NextCol];
+		if (NextCell & CellType) {
+			if (IsCoordsValid(DiagonalRow, DiagonalCol)) {
+				const int32& DiagonalCell = DungeonGrid[DiagonalRow][DiagonalCol];
+				if (!(DiagonalCell & CellType)) {
+					MarkerLocation.X -= CurrentDirection.X * HalfWallThickness;
+					MarkerLocation.Y -= CurrentDirection.Y * HalfWallThickness;
+					Marker.Transform.SetLocation(MarkerLocation);
+					return;
+				}
+
+				FIntPoint OffsetDirection = NextDirection - CurrentDirection;
+
+				MarkerLocation.X += OffsetDirection.X * HalfWallThickness;
+				MarkerLocation.Y += OffsetDirection.Y * HalfWallThickness;
+				Marker.Transform.SetLocation(MarkerLocation);
+				return;
+			}			
+		}
+	}
+
+	MarkerLocation.X -= DiagonalDirection.X * HalfWallThickness;
+	MarkerLocation.Y -= DiagonalDirection.Y * HalfWallThickness;
+	Marker.Transform.SetLocation(MarkerLocation);
+}
+
 FORCEINLINE const int32 UGridDungeonBuilder::GetRandomDirectionIndex()
 {
 	return FMath::RandRange(0, UGridDungeonBuilder::NumDirections - 1);
 }
+
+#pragma optimize("", on)

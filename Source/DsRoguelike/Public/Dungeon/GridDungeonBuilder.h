@@ -87,6 +87,7 @@ protected:
 
 	//Markers temp
 	void PlaceFloorMarkers();
+	void PlaceSeparatorMarker(FDungeonMarker& Marker, int32 I, int32 J, int32 DirectionIndex, const float& HalfWallThickness);
 
 	FORCEINLINE const int32 GetRandomDirectionIndex();
 protected:
