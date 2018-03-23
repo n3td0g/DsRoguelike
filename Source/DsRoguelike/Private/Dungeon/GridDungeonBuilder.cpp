@@ -482,18 +482,27 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 	FDungeonMarker FloorMarker;
 	FDungeonMarker WallMarker;
 	FDungeonMarker DoorMarker;
+	FDungeonMarker SeparatorMarker;
 
 	FloorMarker.Transform = FTransform::Identity;
 	WallMarker.Transform = FTransform::Identity;
 	DoorMarker.Transform = FTransform::Identity;
+	SeparatorMarker.Transform = FTransform::Identity;
 
 	auto& FloorMarkers = Markers.Add(TEXT("Floor"));
 	auto& WallMarkers = Markers.Add(TEXT("Wall"));
 	auto& EntranceMarkers = Markers.Add(TEXT("Entrance"));
 	auto& DoorMarkers = Markers.Add(TEXT("Door"));
+	auto& SeparatorMarkers = Markers.Add(TEXT("Separator"));
 
 	float HalfCellSize = BuilderConfig.CellSize * 0.5f;
-	float SizeWithWall = HalfCellSize - BuilderConfig.WallThickness;
+	float SizeWithWall = HalfCellSize - BuilderConfig.WallThickness * 0.5f;
+
+	const FVector SeparatorOffsets[4] = {
+		FVector(HalfCellSize, HalfCellSize, 0.0f),
+		FVector(HalfCellSize, -HalfCellSize, 0.0f),
+		FVector(-HalfCellSize, -HalfCellSize, 0.0f),
+		FVector(-HalfCellSize, HalfCellSize, 0.0f) };
 
 	for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J) {
 		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
@@ -504,14 +513,20 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 				FloorMarker.Transform.SetLocation(CellCenter);
 				FloorMarkers.Push(FloorMarker);
 				FRotator Rotation = FRotator::ZeroRotator;
+				int32 SeparatorIndex = 0;
+
 				for (const auto& Direction : UGridDungeonBuilder::AllDirections) {
 					int32 Row = I + Direction.X;
 					int32 Col = J + Direction.Y;
+
+					WallMarker.Transform.SetLocation(CellCenter + FVector(SizeWithWall * Direction.X, SizeWithWall * Direction.Y, 0.0f));
+					WallMarker.Transform.SetRotation(Rotation.Quaternion());
+
+					SeparatorMarker.Transform.SetLocation(CellCenter + SeparatorOffsets[SeparatorIndex]);
+
 					if (IsCoordsValid(Row, Col)) {
 						const int32& Cell = DungeonGrid[Row][Col];
-						if (!(Cell & CellType)) {
-							WallMarker.Transform.SetLocation(CellCenter + FVector(SizeWithWall * Direction.X, SizeWithWall * Direction.Y, 0.0f));
-							WallMarker.Transform.SetRotation(Rotation.Quaternion());
+						if (!(Cell & CellType)) {							
 							bool IsRoomEntrance = (Cell & ROOM_ENTRANCE) == ROOM_ENTRANCE;
 							bool IsCorridorEntrance = (Data & ROOM_ENTRANCE) && (Cell & DUNGEON_ROOM);
 							if (IsRoomEntrance || IsCorridorEntrance) {
@@ -524,11 +539,17 @@ void UGridDungeonBuilder::PlaceFloorMarkers()
 							}
 							else {
 								WallMarkers.Push(WallMarker);
+								SeparatorMarkers.Push(SeparatorMarker);
 							}
 						}
 					}
+					else {
+						SeparatorMarkers.Push(SeparatorMarker);
+						WallMarkers.Push(WallMarker);
+					}
 					
-					Rotation.Yaw += 90.0f;
+					Rotation.Yaw -= 90.0f;
+					++SeparatorIndex;
 				}
 			}
 		}
