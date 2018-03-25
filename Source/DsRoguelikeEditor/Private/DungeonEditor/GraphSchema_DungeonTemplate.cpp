@@ -93,7 +93,7 @@ UEdGraphNode* FCustomSchemaAction_NewVisualNode::SpawnNode(UEdGraph* ParentGraph
 UEdGraphNode* FCustomSchemaAction_NewMarkerEmitterNode::SpawnNode(UEdGraph* ParentGraph)
 {
 	UEmitterGraphNode* EmitterNode = NewObject<UEmitterGraphNode>((UObject *)ParentGraph, UEmitterGraphNode::StaticClass());
-	EmitterNode->MarkerName = MarkerName;
+	EmitterNode->MarkerNode = MarkerNode;
 	return EmitterNode;
 }
 
@@ -138,7 +138,7 @@ void UGraphSchema_DungeonTemplate::GetGraphContextActions(FGraphContextMenuBuild
 			FString Description = EmitterNodeDescription + ": " + MarkerNode.Value->MarkerName.ToString();
 			auto MarkerEmitterAction = new FCustomSchemaAction_NewMarkerEmitterNode(EmitterNodeCategory, FText::FromString(Description), EmitterNodeToolTip, 1);
 			auto MarkerEmitterNodeAction = TSharedPtr<FCustomSchemaAction_NewMarkerEmitterNode>(MarkerEmitterAction);
-			MarkerEmitterNodeAction->MarkerName = MarkerNode.Value->MarkerName;
+			MarkerEmitterNodeAction->MarkerNode = MarkerNode.Value;
 			ContextMenuBuilder.AddAction(MarkerEmitterNodeAction);
 		}
 	}

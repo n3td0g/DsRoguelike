@@ -79,7 +79,7 @@ struct FCustomSchemaAction_NewMarkerEmitterNode : public FCustomSchemaAction_New
 		: FCustomSchemaAction_NewNode(InNodeCategory, InMenuDesc, InToolTip, InGrouping)
 	{}
 	
-	FName MarkerName;
+	class UMarkerNode* MarkerNode;
 
 	virtual UEdGraphNode* SpawnNode(UEdGraph* ParentGraph) override;
 };

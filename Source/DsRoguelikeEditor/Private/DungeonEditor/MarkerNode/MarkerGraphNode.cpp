@@ -6,6 +6,8 @@
 #include "VisualGraphNode.h"
 #include "VisualNode.h"
 #include "MarkerNode.h"
+#include "EdGraph_DungeonTemplate.h"
+#include "DungeonTemplate.h"
 
 
 void UMarkerGraphNode::AllocateDefaultPins()
@@ -45,6 +47,27 @@ void UMarkerGraphNode::PinConnectionListChanged(UEdGraphPin * Pin)
 			auto VisualNode = Cast<UVisualGraphNode>(Link->GetOwningNode());
 			if (VisualNode) {
 				MarkerNode->VisualNodes.Push(VisualNode->VisualNode);
+			}
+		}
+	}
+}
+
+bool UMarkerGraphNode::CanUserDeleteNode() const
+{
+	return true;
+}
+
+void UMarkerGraphNode::DestroyNode()
+{
+	Super::DestroyNode();
+
+	auto ParrentGraph = Cast<UEdGraph_DungeonTemplate>(GetGraph());
+
+	if (ParrentGraph) {
+		auto DungeonTemplate = ParrentGraph->GetDungeonTemplate();
+		if (DungeonTemplate) {
+			if (DungeonTemplate->MarkerNodes.Contains(MarkerNode->MarkerName)) {
+				DungeonTemplate->MarkerNodes.Remove(MarkerNode->MarkerName);
 			}
 		}
 	}

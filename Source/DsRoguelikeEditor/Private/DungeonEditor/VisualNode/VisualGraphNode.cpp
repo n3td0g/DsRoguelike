@@ -2,6 +2,8 @@
 
 #include "VisualGraphNode.h"
 #include "VisualNode.h"
+#include "EdGraph_DungeonTemplate.h"
+#include "DungeonTemplate.h"
 
 void UVisualGraphNode::AllocateDefaultPins()
 {

@@ -1,11 +1,19 @@
 #include "AssetEditor_DungeonGraph.h"
 #include "IDetailsView.h"
 #include "GenericCommands.h"
+#include "GraphEditor.h"
 #include "PropertyEditorModule.h"
 #include "EdGraph_DungeonTemplate.h"
 #include "Editor/UnrealEd/Public/Kismet2/BlueprintEditorUtils.h"
 #include "Framework/Docking/TabManager.h"
 #include "GraphSchema_DungeonTemplate.h"
+
+#include "MarkerGraphNode.h"
+#include "VisualGraphNode.h"
+#include "EmitterGraphNode.h"
+
+#include "MarkerNode.h"
+#include "VisualNode.h"
 
 #define LOCTEXT_NAMESPACE "FAssetEditor_DungeonGraph"
 
@@ -96,7 +104,31 @@ void FAssetEditor_DungeonGraph::InitDungeonGraphAssetEditor(const EToolkitMode::
 
 void FAssetEditor_DungeonGraph::DeleteSelectedNodes()
 {
+	TArray<UEdGraphNode*> NodesToDelete;
+	TSharedPtr<SGraphEditor> FocusedGraphEd = ViewportWidget;
 
+	if (FocusedGraphEd.IsValid())
+	{
+		FocusedGraphEd->GetCurrentGraph()->Modify();
+
+		const FGraphPanelSelectionSet SelectedNodes = FocusedGraphEd->GetSelectedNodes();
+		FocusedGraphEd->ClearSelectionSet();
+
+		for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+		{
+			UEdGraphNode* EdNode = Cast<UEdGraphNode>(*NodeIt);
+			if (EdNode == nullptr || !EdNode->CanUserDeleteNode())
+				continue;			
+
+			auto MarkerNode = Cast<UMarkerGraphNode>(*NodeIt);
+			if (MarkerNode) {
+				DeleteMarkerNode(MarkerNode);
+				continue;
+			}
+
+			DeleteNode(EdNode);
+		}
+	}
 }
 
 bool FAssetEditor_DungeonGraph::CanDeleteNodes()
@@ -242,7 +274,7 @@ TSharedRef<SGraphEditor> FAssetEditor_DungeonGraph::CreateViewportWidget()
 	//InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FAssetEditor_GenericGraph::OnNodeDoubleClicked);
 
 	return SNew(SGraphEditor)
-		//.AdditionalCommands(GraphEditorCommands)
+		.AdditionalCommands(GraphEditorCommands)
 		.IsEditable(true)
 		.Appearance(AppearanceInfo)
 		.GraphToEdit(DungeonTemplate->EdGraph)
@@ -277,6 +309,42 @@ void FAssetEditor_DungeonGraph::CreateCommandList()
 		FExecuteAction::CreateRaw(this, &FAssetEditor_DungeonGraph::DeleteSelectedNodes),
 		FCanExecuteAction::CreateRaw(this, &FAssetEditor_DungeonGraph::CanDeleteNodes)
 	);
+}
+
+void FAssetEditor_DungeonGraph::DeleteMarkerNode(class UMarkerGraphNode* MarkerNode)
+{
+	if (MarkerNode->MarkerNode) {
+		if (DungeonTemplate) {
+			if (DungeonTemplate->MarkerNodes.Contains(MarkerNode->MarkerNode->MarkerName)) {
+				if (DungeonTemplate->EdGraph) {
+					TArray<UEmitterGraphNode*> EmitterNodes;
+					DungeonTemplate->EdGraph->GetNodesOfClass<UEmitterGraphNode>(EmitterNodes);
+					for (auto EmitterNode : EmitterNodes) {
+						if (EmitterNode->MarkerNode == MarkerNode->MarkerNode) {
+							DeleteNode(EmitterNode);
+						}
+					}
+				}
+
+				DungeonTemplate->Modify();
+				DungeonTemplate->MarkerNodes.Remove(MarkerNode->MarkerNode->MarkerName);
+			}
+		}
+	}
+	DeleteNode(MarkerNode);
+}
+
+void FAssetEditor_DungeonGraph::DeleteNode(class UEdGraphNode* Node)
+{
+	Node->Modify();
+
+	const UEdGraphSchema* Schema = Node->GetSchema();
+	if (Schema != nullptr)
+	{
+		Schema->BreakNodeLinks(*Node);
+	}
+
+	FBlueprintEditorUtils::RemoveNode(NULL, Node, true);
 }
 
 void FAssetEditor_DungeonGraph::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)

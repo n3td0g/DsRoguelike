@@ -20,6 +20,8 @@ public:
 	virtual FLinearColor GetNodeTitleColor() const override;
 
 	virtual void PinConnectionListChanged(UEdGraphPin * Pin) override;
+	virtual bool CanUserDeleteNode() const override;
+	virtual void DestroyNode() override;
 public:
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "Marker")
 	class UMarkerNode* MarkerNode;

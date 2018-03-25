@@ -21,5 +21,5 @@ public:
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Marker Emitter")
-	FName MarkerName;
+	class UMarkerNode* MarkerNode;
 };

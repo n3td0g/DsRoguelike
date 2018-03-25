@@ -45,6 +45,9 @@ protected:
 	void CreateEdGraph();
 	void CreateCommandList();
 
+	virtual void DeleteMarkerNode(class UMarkerGraphNode* MarkerNode);
+	virtual void DeleteNode(class UEdGraphNode* Node);
+
 	// Delegates for graph editor commands
 
 	// editor event
