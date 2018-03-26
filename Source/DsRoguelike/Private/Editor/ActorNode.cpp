@@ -17,7 +17,7 @@ void UActorNode::Process(const FTransform& MarkerTransform, UWorld* World)
 		{
 			SpawnParameters.Template = ActorTemplate;
 		}
-		auto Actor = World->SpawnActor<AActor>(ActorClass, WorldTransform);
+		auto Actor = World->SpawnActor<AActor>(ActorClass, WorldTransform, SpawnParameters);
 	}
 }
 

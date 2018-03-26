@@ -3,6 +3,7 @@
 #include "GraphSchema_DungeonTemplate.h"
 #include "EdGraph_DungeonTemplate.h"
 #include "ConnectionDrawingPolicy.h"
+#include "GraphEditorActions.h"
 #include "GenericCommands.h"
 #include "DungeonTemplate.h"
 #include "MarkerGraphNode.h"
@@ -142,6 +143,8 @@ void UGraphSchema_DungeonTemplate::GetContextMenuActions(const UEdGraph* Current
 		MenuBuilder->BeginSection("GenericGraphAssetGraphSchemaNodeActions", FText::FromString(TEXT("Node Actions")));
 		{
 			MenuBuilder->AddMenuEntry(FGenericCommands::Get().Delete);
+
+			MenuBuilder->AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
 		}
 		MenuBuilder->EndSection();
 	}
