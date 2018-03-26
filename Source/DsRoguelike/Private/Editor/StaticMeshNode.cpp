@@ -12,7 +12,7 @@ void UStaticMeshNode::Process(const FTransform& MarkerTransform, UWorld* World)
 	FTransform WorldTransform = MarkerTransform;
 	WorldTransform.Accumulate(Transform);
 
-	auto StaticMeshActor = World->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), WorldTransform);
+	auto StaticMeshActor = World->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), WorldTransform, SpawnParameters);
 	if (StaticMeshActor) {
 		auto StaticMeshComponent = StaticMeshActor->GetStaticMeshComponent();
 		StaticMeshComponent->SetStaticMesh(StaticMesh);

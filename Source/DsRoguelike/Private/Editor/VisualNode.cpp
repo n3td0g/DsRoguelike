@@ -1,7 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "VisualNode.h"
+#include "StaticMeshNode.h"
+#include "ActorNode.h"
 
+UVisualNode::UVisualNode()
+{
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+}
 
 FString UVisualNode::GetNodeName(EVisualNodeType Type)
 {
@@ -9,7 +15,22 @@ FString UVisualNode::GetNodeName(EVisualNodeType Type)
 	{
 	case EVisualNodeType::StaticMesh:
 		return TEXT("Static Mesh Node");
+	case EVisualNodeType::Actor:
+		return TEXT("Actor Node");
 	default:
 		return TEXT("None");
+	}
+}
+
+UClass* UVisualNode::GetNodeClass(EVisualNodeType Type)
+{
+	switch (Type)
+	{
+	case EVisualNodeType::StaticMesh:
+		return UStaticMeshNode::StaticClass();
+	case EVisualNodeType::Actor:
+		return UActorNode::StaticClass();
+	default:
+		return UVisualNode::StaticClass();
 	}
 }
