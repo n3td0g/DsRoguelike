@@ -28,5 +28,7 @@ bool UEdGraph_DungeonTemplate::Modify(bool bAlwaysMarkDirty /*= true*/)
 void UEdGraph_DungeonTemplate::PostEditUndo()
 {
 	Super::PostEditUndo();
+
+	NotifyGraphChanged();
 }
 

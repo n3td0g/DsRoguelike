@@ -21,6 +21,8 @@ UEdGraphNode* FCustomSchemaAction_NewNode::PerformAction(UEdGraph* ParentGraph, 
 		return Node;
 	}
 
+	const FScopedTransaction Transaction(FText::FromString(TEXT("DungeonTemplate: New Node")));
+
 	ParentGraph->Modify();
 	ParentGraph->AddNode(Node, true, bSelectNewNode);
 
@@ -204,6 +206,27 @@ FLinearColor UGraphSchema_DungeonTemplate::GetPinTypeColor(const FEdGraphPinType
 bool UGraphSchema_DungeonTemplate::ShouldHidePinDefaultValue(UEdGraphPin* Pin) const
 {
 	return true;
+}
+
+void UGraphSchema_DungeonTemplate::BreakNodeLinks(UEdGraphNode& TargetNode) const
+{
+	const FScopedTransaction Transaction(FText::FromString(TEXT("DungeonTemplate: BreakNodeLinks")));
+
+	Super::BreakNodeLinks(TargetNode);
+}
+
+void UGraphSchema_DungeonTemplate::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
+{
+	const FScopedTransaction Transaction(FText::FromString(TEXT("DungeonTemplate: BreakPinLinks")));
+
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
+}
+
+void UGraphSchema_DungeonTemplate::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin)
+{
+	const FScopedTransaction Transaction(FText::FromString(TEXT("DungeonTemplate: BreakSinglePinLink")));
+
+	Super::BreakSinglePinLink(SourcePin, TargetPin);
 }
 
 class FConnectionDrawingPolicy* UGraphSchema_DungeonTemplate::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const

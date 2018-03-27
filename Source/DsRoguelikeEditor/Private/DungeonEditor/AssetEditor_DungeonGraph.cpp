@@ -107,6 +107,8 @@ void FAssetEditor_DungeonGraph::DeleteSelectedNodes()
 	TArray<UEdGraphNode*> NodesToDelete;
 	TSharedPtr<SGraphEditor> FocusedGraphEd = ViewportWidget;
 
+	const FScopedTransaction Transaction(FGenericCommands::Get().Delete->GetDescription());
+
 	if (FocusedGraphEd.IsValid())
 	{
 		FocusedGraphEd->GetCurrentGraph()->Modify();
