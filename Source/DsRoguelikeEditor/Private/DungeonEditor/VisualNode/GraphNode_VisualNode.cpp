@@ -128,25 +128,28 @@ void SGraphNode_VisualNode::CreateNodeWidget()
 void SGraphNode_VisualNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 {
 	const FSlateBrush* NodeTypeIcon = GetNameIcon();
+	const FSlateBrush* NodeIcon = VisualNode->GetIcon();
 
 	NodeBox->AddSlot()
 	.AutoHeight()
 	[
 		SNew(SHorizontalBox)
 
-		+ SHorizontalBox::Slot()
+		/*+ SHorizontalBox::Slot()
 		.AutoWidth()
 		.VAlign(VAlign_Center)
 		[
 			SNew(SImage)
 			.Image(NodeTypeIcon)
-		]
+		]*/
 		+ SHorizontalBox::Slot()
 		.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 		[
-			SNew(STextBlock)
+			SNew(SImage)
+			.Image(NodeIcon)
+			/*SNew(STextBlock)
 			.Text(FText::FromString(TEXT("Test")))
-			.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 16))
+			.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 16))*/
 		]
 	];
 }

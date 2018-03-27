@@ -58,6 +58,14 @@ void UActorNode::PostEditChangeChainProperty(FPropertyChangedChainEvent& Propert
 	Super::PostEditChangeChainProperty(PropertyChangedEvent);
 }
 
+UObject* UActorNode::GetObject()
+{
+	if (ActorTemplate) {
+		return ActorTemplate;
+	}
+	return Super::GetObject();
+}
+
 void UActorNode::SetChildActorClass(TSubclassOf<AActor> InClass)
 {
 	ActorClass = InClass;

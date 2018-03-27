@@ -3,6 +3,8 @@
 #include "VisualGraphNode.h"
 #include "VisualNode.h"
 #include "EdGraph_DungeonTemplate.h"
+#include "SlateIconFinder.h"
+#include "ClassIconFinder.h"
 #include "DungeonTemplate.h"
 
 void UVisualGraphNode::AllocateDefaultPins()
@@ -18,4 +20,25 @@ FText UVisualGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 FLinearColor UVisualGraphNode::GetNodeTitleColor() const
 {
 	return FLinearColor::Green;
+}
+
+const FSlateBrush* UVisualGraphNode::GetIcon()
+{
+	if (!VisualNode) {
+		return nullptr;
+	}
+
+	auto Object = VisualNode->GetObject();
+	if (!Object) {
+		return nullptr;
+	}
+
+	return FClassIconFinder::FindThumbnailForClass(Object->GetClass());
+
+	/*if (Object->IsAsset()) {
+		Object->GetPrimaryAssetId()
+	}
+	else {
+		return FClassIconFinder::FindIconForClass(Object->GetClass());
+	}*/
 }

@@ -24,6 +24,7 @@ public:
 #endif
 
 	AActor* GetActorTemplate() const { return ActorTemplate; }
+	virtual UObject* GetObject() override;
 
 public:
 	TSubclassOf<AActor> GetActorClass() const { return ActorClass; }

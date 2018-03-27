@@ -30,6 +30,7 @@ public:
 	static UClass* GetNodeClass(EVisualNodeType Type);
 
 	virtual void Process(const FTransform& MarkerTransform, UWorld* World) {}
+	virtual UObject* GetObject() {	return this; }
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Transform")

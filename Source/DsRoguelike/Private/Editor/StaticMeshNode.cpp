@@ -18,3 +18,11 @@ void UStaticMeshNode::Process(const FTransform& MarkerTransform, UWorld* World)
 		StaticMeshComponent->SetStaticMesh(StaticMesh);
 	}
 }
+
+UObject* UStaticMeshNode::GetObject()
+{
+	if (StaticMesh) {
+		return StaticMesh;
+	}
+	return Super::GetObject();
+}
