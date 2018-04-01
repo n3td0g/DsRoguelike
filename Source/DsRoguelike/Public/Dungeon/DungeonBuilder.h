@@ -36,7 +36,7 @@ public:
 	
 public:
 	virtual void GenerateDungeon(ADungeon* ParentDungeon);
-	virtual void PlaceMarkers();
+	//virtual void PlaceMarkers();
 
 	virtual void BeginDestroy();
 
@@ -55,8 +55,6 @@ public:
 	TMap<FName, TArray<FDungeonMarker>> Markers;
 
 protected:
-	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "PlaceMarkers"))
-	void ReceivePlaceMarkers();
 	
 	virtual void EmptyDungeon();
 	void CleanDungeon();

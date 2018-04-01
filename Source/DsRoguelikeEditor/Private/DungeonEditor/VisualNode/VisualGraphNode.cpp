@@ -22,23 +22,11 @@ FLinearColor UVisualGraphNode::GetNodeTitleColor() const
 	return FLinearColor::Green;
 }
 
-const FSlateBrush* UVisualGraphNode::GetIcon()
+const UObject* UVisualGraphNode::GetObject()
 {
 	if (!VisualNode) {
 		return nullptr;
 	}
 
-	auto Object = VisualNode->GetObject();
-	if (!Object) {
-		return nullptr;
-	}
-
-	return FClassIconFinder::FindThumbnailForClass(Object->GetClass());
-
-	/*if (Object->IsAsset()) {
-		Object->GetPrimaryAssetId()
-	}
-	else {
-		return FClassIconFinder::FindIconForClass(Object->GetClass());
-	}*/
+	return VisualNode->GetObject();
 }

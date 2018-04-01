@@ -128,12 +128,30 @@ void SGraphNode_VisualNode::CreateNodeWidget()
 void SGraphNode_VisualNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 {
 	const FSlateBrush* NodeTypeIcon = GetNameIcon();
-	const FSlateBrush* NodeIcon = VisualNode->GetIcon();
+
+	const int32 ThumbnailSize = 48;
+	auto MyAsset = VisualNode->GetObject();
+
+	TSharedPtr<FAssetThumbnail> Thumbnail = MakeShareable(new FAssetThumbnail(MyAsset, ThumbnailSize, ThumbnailSize, nullptr));
+	FAssetThumbnailConfig ThumbnailConfig;
 
 	NodeBox->AddSlot()
 	.AutoHeight()
 	[
 		SNew(SHorizontalBox)
+
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		.Padding(4.0f, 4.0f)
+		[
+			SNew(SBox)
+			.WidthOverride(ThumbnailSize)
+		.HeightOverride(ThumbnailSize)
+		[
+			Thumbnail->MakeThumbnailWidget(ThumbnailConfig)
+		]
+		]
 
 		/*+ SHorizontalBox::Slot()
 		.AutoWidth()
@@ -142,15 +160,16 @@ void SGraphNode_VisualNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 			SNew(SImage)
 			.Image(NodeTypeIcon)
 		]*/
-		+ SHorizontalBox::Slot()
+		/*+ SHorizontalBox::Slot()
 		.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 		[
 			SNew(SImage)
 			.Image(NodeIcon)
-			/*SNew(STextBlock)
+			SNew(STextBlock)
 			.Text(FText::FromString(TEXT("Test")))
-			.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 16))*/
-		]
+			.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 16))
+		]*/
+
 	];
 }
 

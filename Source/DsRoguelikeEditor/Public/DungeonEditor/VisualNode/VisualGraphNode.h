@@ -20,7 +20,7 @@ public:
 
 	virtual FLinearColor GetNodeTitleColor() const override;
 
-	const FSlateBrush* GetIcon();
+	const UObject* GetObject();
 
 public:
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "Visual Node")

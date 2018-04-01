@@ -8,6 +8,7 @@
 #include "Dungeon.generated.h"
 
 class UDungeonBuilder;
+class UMarkerEmitter;
 
 UCLASS()
 class DSROGUELIKE_API ADungeon : public AActor
@@ -36,11 +37,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dungeon")
 	TSubclassOf<UDungeonBuilder> BuilderClass;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Themes")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dungeon")
 	TArray<class UDungeonTemplate*> Templates;
 
-private:
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dungeon")
+	TArray<TSubclassOf<UMarkerEmitter>> MarkerEmitterClasses;
+
+	UPROPERTY(BlueprintReadOnly)
 	UDungeonBuilder* Builder;
-	
+
+	UPROPERTY(BlueprintReadOnly)
+	TArray<UMarkerEmitter*> MarkerEmitters;
 };

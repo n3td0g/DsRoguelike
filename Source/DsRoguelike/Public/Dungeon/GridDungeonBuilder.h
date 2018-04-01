@@ -54,7 +54,7 @@ public:
 	
 public:
 	virtual void GenerateDungeon(ADungeon* ParentDungeon) override;
-	virtual void PlaceMarkers() override;
+	FORCEINLINE const int32& GetCell(int32 I, int32 J);
 
 protected:
 	void Initialize();
@@ -86,17 +86,9 @@ protected:
 	void PrintDungeon();
 
 	//Markers temp
-	void PlaceFloorMarkers();
-	void PlaceSeparatorMarker(FDungeonMarker& Marker, int32 I, int32 J, int32 DirectionIndex, const float& HalfWallThickness);
-
-	FORCEINLINE const int32 GetRandomDirectionIndex();
+	//void PlaceFloorMarkers();
+	//void PlaceSeparatorMarker(FDungeonMarker& Marker, int32 I, int32 J, int32 DirectionIndex, const float& HalfWallThickness);
 protected:
-	static const FIntPoint DirectionUp;
-	static const FIntPoint DirectionRight;
-	static const FIntPoint DirectionDown;
-	static const FIntPoint DirectionLeft;
-	static const int32 NumDirections;
-	static const FIntPoint AllDirections[4];
 
 	FDungeonLeaf* RootLeaf;
 

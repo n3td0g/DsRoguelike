@@ -28,11 +28,6 @@ void UDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 	}
 }
 
-void UDungeonBuilder::PlaceMarkers()
-{
-	ReceivePlaceMarkers();
-}
-
 void UDungeonBuilder::BeginDestroy()
 {
 	Super::BeginDestroy();

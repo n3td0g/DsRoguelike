@@ -1,19 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GridDungeonBuilder.h"
+#include "DungeonDirections.h"
 
 #pragma optimize("", off)
-
-const FIntPoint UGridDungeonBuilder::DirectionUp = FIntPoint(0, 1);
-const FIntPoint UGridDungeonBuilder::DirectionDown = FIntPoint(0, -1);
-const FIntPoint UGridDungeonBuilder::DirectionLeft = FIntPoint(-1, 0);
-const FIntPoint UGridDungeonBuilder::DirectionRight = FIntPoint(1, 0);
-const int32 UGridDungeonBuilder::NumDirections = 4;
-const FIntPoint UGridDungeonBuilder::AllDirections[4] = { 
-															UGridDungeonBuilder::DirectionUp,
-															UGridDungeonBuilder::DirectionRight,
-															UGridDungeonBuilder::DirectionDown,
-															UGridDungeonBuilder::DirectionLeft };
 
 UGridDungeonBuilder::UGridDungeonBuilder()
 {
@@ -46,12 +36,9 @@ void UGridDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 	PrintDungeon();	
 }
 
-void UGridDungeonBuilder::PlaceMarkers()
+FORCEINLINE const int32& UGridDungeonBuilder::GetCell(int32 I, int32 J)
 {
-	Super::PlaceMarkers();
-
-	//Markers
-	PlaceFloorMarkers();
+	return DungeonGrid[I][J];
 }
 
 void UGridDungeonBuilder::Initialize()
@@ -232,18 +219,18 @@ void UGridDungeonBuilder::OpenRoom(FDungeonRoom& Room)
 	int32 RoomRight = Room.RoomPosition.X + Room.RoomSize.X - 1;
 	int32 RoomTop = Room.RoomPosition.Y + Room.RoomSize.Y - 1;
 	for (int32 Row = Room.RoomPosition.X + 1; Row <= RoomRight; Row += 2) {
-		if (CheckSill(Row, Room.RoomPosition.Y, UGridDungeonBuilder::DirectionDown)) {
+		if (CheckSill(Row, Room.RoomPosition.Y, FDungeonDirections::DirectionDown)) {
 			DoorPlaces.Push(FIntPoint(Row, Room.RoomPosition.Y));
 		}
-		if (CheckSill(Row, RoomTop, UGridDungeonBuilder::DirectionUp)) {
+		if (CheckSill(Row, RoomTop, FDungeonDirections::DirectionUp)) {
 			DoorPlaces.Push(FIntPoint(Row, RoomTop));
 		}
 	}
 	for (int32 Col = Room.RoomPosition.Y + 1; Col <= RoomTop; Col += 2) {
-		if (CheckSill(Room.RoomPosition.X, Col, UGridDungeonBuilder::DirectionLeft)) {
+		if (CheckSill(Room.RoomPosition.X, Col, FDungeonDirections::DirectionLeft)) {
 			DoorPlaces.Push(FIntPoint(Room.RoomPosition.X, Col));
 		}
-		if (CheckSill(RoomRight, Col, UGridDungeonBuilder::DirectionRight)) {
+		if (CheckSill(RoomRight, Col, FDungeonDirections::DirectionRight)) {
 			DoorPlaces.Push(FIntPoint(RoomRight, Col));
 		}
 	}
@@ -261,7 +248,7 @@ void UGridDungeonBuilder::OpenRoom(FDungeonRoom& Room)
 
 		FIntPoint EntranceLocation;
 		int32 DirectionIndex = 0;
-		for (auto& Direction : UGridDungeonBuilder::AllDirections) {
+		for (auto& Direction : FDungeonDirections::AllDirections) {
 			EntranceLocation.X = DoorLocation.X + Direction.X;
 			EntranceLocation.Y = DoorLocation.Y + Direction.Y;
 			if (!IsPointValid(EntranceLocation)) {
@@ -324,7 +311,7 @@ bool UGridDungeonBuilder::CheckRoom(FDungeonRoom& Room)
 {
 	for (int32 I = Room.Doors.Num() - 1; I >= 0; --I) {
 		const FDoorInfo& Door = Room.Doors[I];
-		const FIntPoint& Direction = UGridDungeonBuilder::AllDirections[Door.DirectionIndex];
+		const FIntPoint& Direction = FDungeonDirections::AllDirections[Door.DirectionIndex];
 		int32& Data = DungeonGrid[Door.Location.X + Direction.X][Door.Location.Y + Direction.Y];
 		if (Data & ROOM_ENTRANCE) {
 			int32 Row = Door.Location.X + Direction.X * 2;
@@ -348,7 +335,7 @@ void UGridDungeonBuilder::CreateCorridors()
 {
 	for (auto& Room : Rooms) {
 		for (auto& Door : Room.Doors) {
-			const FIntPoint& Direction = UGridDungeonBuilder::AllDirections[Door.DirectionIndex];
+			const FIntPoint& Direction = FDungeonDirections::AllDirections[Door.DirectionIndex];
 			int32 CorridorX = Door.Location.X + Direction.X;
 			int32 CorridorY = Door.Location.Y + Direction.Y;
 			CreateCorridor(CorridorX, CorridorY, Door.DirectionIndex);
@@ -368,12 +355,11 @@ void UGridDungeonBuilder::CreateCorridor(int32 I, int32 J, int32 LastDirection)
 	if (StartCell & DUNGEON_CORRIDOR) {
 		return;
 	}
+	int32 DirectionIndex = FMath::FRand() < BuilderConfig.ChangeDirectionChance ? FDungeonDirections::GetRandomDirectionIndex() : LastDirection;
 
-	int32 DirectionIndex = FMath::FRand() < BuilderConfig.ChangeDirectionChance ? UGridDungeonBuilder::GetRandomDirectionIndex() : LastDirection;
-
-	for (int32 Row = 0; Row < UGridDungeonBuilder::NumDirections; ++Row, ++DirectionIndex) {
-		DirectionIndex %= UGridDungeonBuilder::NumDirections;
-		const FIntPoint& Direction = UGridDungeonBuilder::AllDirections[DirectionIndex];
+	for (int32 Row = 0; Row < FDungeonDirections::NumDirections; ++Row, ++DirectionIndex) {
+		DirectionIndex %= FDungeonDirections::NumDirections;
+		const FIntPoint& Direction = FDungeonDirections::AllDirections[DirectionIndex];
 		if (!CheckCorridor(CorridorX, CorridorY, Direction)) {
 			continue;
 		}
@@ -429,7 +415,7 @@ void UGridDungeonBuilder::CollapseCorridor(int32 I, int32 J)
 		++NumWays;
 	}
 
-	for (auto& Direction : UGridDungeonBuilder::AllDirections) {
+	for (auto& Direction : FDungeonDirections::AllDirections) {
 		int32 Row = I + Direction.X;
 		int32 Col = J + Direction.Y;
 		if (Row >= 0 && Row < BuilderConfig.DungeonWidth && Col >= 0 && Col < BuilderConfig.DungeonHeight) {
@@ -479,6 +465,7 @@ void UGridDungeonBuilder::PrintDungeon()
 	}
 }
 
+/*
 void UGridDungeonBuilder::PlaceFloorMarkers()
 {
 	FDungeonMarker FloorMarker;
@@ -608,6 +595,4 @@ void UGridDungeonBuilder::PlaceSeparatorMarker(FDungeonMarker& Marker, int32 I, 
 FORCEINLINE const int32 UGridDungeonBuilder::GetRandomDirectionIndex()
 {
 	return FMath::RandRange(0, UGridDungeonBuilder::NumDirections - 1);
-}
-
-#pragma optimize("", on)
+}*/

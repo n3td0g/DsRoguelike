@@ -5,6 +5,7 @@
 #include "DungeonBuilder.h"
 #include "MarkerNode.h"
 #include "VisualNode.h"
+#include "MarkerEmitter.h"
 #include "DungeonMarker.h"
 
 // Sets default values
@@ -61,9 +62,23 @@ void ADungeon::CreateDungeon()
 		UE_LOG(LogTemp, Warning, TEXT("CreateDungeon: BuilderClass is null"));
 	}
 
-	Builder = BuilderClass->GetDefaultObject<UDungeonBuilder>();
+	if (!Builder) {
+		Builder = BuilderClass->GetDefaultObject<UDungeonBuilder>();
+	}
+
+	if (MarkerEmitters.Num() == 0) {
+		for (auto EmitterClass : MarkerEmitterClasses) {
+			if (EmitterClass) {
+				MarkerEmitters.Push(EmitterClass->GetDefaultObject<UMarkerEmitter>());
+			}
+		}
+	}
+	
 	Builder->GenerateDungeon(this);
-	Builder->PlaceMarkers();
+
+	for (auto MarkerEmitter : MarkerEmitters) {
+		MarkerEmitter->EmitMarkers(Builder, this);
+	}
 
 	CreateDungeonVisual();
 }
