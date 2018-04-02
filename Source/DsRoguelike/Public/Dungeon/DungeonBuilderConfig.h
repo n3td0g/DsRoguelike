@@ -44,4 +44,7 @@ struct FDungeonBuilderConfig
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Walls")
 	float WallThickness = 50.0f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options|Widnows")
+	float ChangeToPlaceWindow = 0.1f;
 };

@@ -10,8 +10,7 @@
 void UActorNode::Process(const FTransform& MarkerTransform, UWorld* World)
 {
 	if (ActorClass) {
-		FTransform WorldTransform = MarkerTransform;
-		WorldTransform.Accumulate(Transform);
+		FTransform WorldTransform = Transform * MarkerTransform;
 
 		if (ActorTemplate && ActorTemplate->GetClass() == ActorClass)
 		{
@@ -26,15 +25,6 @@ void UActorNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass))
 	{
 		SetChildActorClass(ActorClass);
-		/*if (IsTemplate())
-		{
-			SetChildActorClass(ActorClass);
-		}
-		else
-		{
-			UActorNode* Archetype = CastChecked<UActorNode>(GetArchetype());
-			ActorTemplate = (Archetype->ActorClass == ActorClass ? Archetype->ActorTemplate : nullptr);
-		}*/
 	}
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -45,14 +35,6 @@ void UActorNode::PostEditChangeChainProperty(FPropertyChangedChainEvent& Propert
 	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass))
 	{
 		SetChildActorClass(ActorClass);
-		/*if (IsTemplate())
-		{
-			SetChildActorClass(ActorClass);
-		}
-		else
-		{
-			ActorTemplate = CastChecked<UActorNode>(GetArchetype())->ActorTemplate;
-		}*/
 	}
 
 	Super::PostEditChangeChainProperty(PropertyChangedEvent);

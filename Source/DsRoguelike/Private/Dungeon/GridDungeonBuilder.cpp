@@ -31,6 +31,7 @@ void UGridDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 	}
 
 	CheckRooms();
+	PlaceWindows();
 
 	//Debug print
 	PrintDungeon();	
@@ -271,20 +272,13 @@ void UGridDungeonBuilder::OpenRoom(FDungeonRoom& Room)
 
 bool UGridDungeonBuilder::CheckSill(int32 Row, int32 Col, const FIntPoint& CheckDirection)
 {
-	int32 DoorR = Row + CheckDirection.X;
-	int32 DoorC = Col + CheckDirection.Y;
+	int32 OpenR = Row + CheckDirection.X * 2;
+	int32 OpenC = Col + CheckDirection.Y * 2;
 
-	if (DungeonGrid[DoorR][DoorC] & BLOCK_DOOR) {
+	if (OpenR <= 0 || OpenC <= 0) {
 		return false;
 	}
-
-	int32 OpenR = DoorR + CheckDirection.X;
-	int32 OpenC = DoorC + CheckDirection.Y;
-
-	if (OpenR == 0 || OpenC == 0) {
-		return false;
-	}
-	if (OpenR == LastRow || OpenC == LastCol) {
+	if (OpenR >= LastRow || OpenC >= LastCol) {
 		return false;
 	}
 
@@ -303,8 +297,12 @@ void UGridDungeonBuilder::CheckRooms()
 			}
 			Rooms.RemoveAt(I);
 		}
+		else {
+			for (auto& Door : Room.Doors) {
+				DungeonGrid[Door.Location.X][Door.Location.Y] |= ROOM_DOOR;
+			}
+		}
 	}
-
 }
 
 bool UGridDungeonBuilder::CheckRoom(FDungeonRoom& Room)
@@ -329,6 +327,47 @@ bool UGridDungeonBuilder::CheckRoom(FDungeonRoom& Room)
 		Room.Doors.RemoveAt(I);
 	}
 	return Room.Doors.Num() > 0;
+}
+
+void UGridDungeonBuilder::PlaceWindows()
+{
+	for (auto& Room : Rooms) {
+		PlaceWindow(Room);
+	}
+}
+
+void UGridDungeonBuilder::PlaceWindow(FDungeonRoom& Room)
+{
+	int32 RoomRight = Room.RoomPosition.X + Room.RoomSize.X - 1;
+	int32 RoomTop = Room.RoomPosition.Y + Room.RoomSize.Y - 1;
+
+	for (int32 Row = Room.RoomPosition.X; Row <= RoomRight; Row += 2) {
+		TryToPlaceWindow(Row, Room.RoomPosition.Y, FDungeonDirections::DirectionDown);
+		TryToPlaceWindow(Row, RoomTop, FDungeonDirections::DirectionUp);
+	}
+	for (int32 Col = Room.RoomPosition.Y; Col <= RoomTop; Col += 2) {
+		TryToPlaceWindow(Room.RoomPosition.X, Col, FDungeonDirections::DirectionLeft);
+		TryToPlaceWindow(RoomRight, Col, FDungeonDirections::DirectionRight);
+	}
+}
+
+bool UGridDungeonBuilder::TryToPlaceWindow(int32 Row, int32 Col, const FIntPoint& CheckDirection)
+{
+	int32 NextR = Row + CheckDirection.X;
+	int32 NextC = Col + CheckDirection.Y;
+	
+	if (!IsCoordsValid(NextR, NextC)) {
+		return false;
+	}
+
+	if (DungeonGrid[NextR][NextC] & DUNGEON_CORRIDOR) {
+		if (FMath::FRand() < BuilderConfig.ChangeToPlaceWindow) {
+			DungeonGrid[Row][Col] |= ROOM_WINDOW;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void UGridDungeonBuilder::CreateCorridors()
@@ -455,6 +494,9 @@ void UGridDungeonBuilder::PrintDungeon()
 			else if (Data & ROOM_DOOR) {
 				C = 'D';
 			}
+			else if (Data & ROOM_WINDOW) {
+				C = 'W';
+			}
 			else if (Data & DUNGEON_ROOM) {
 				C = '-';
 			}
@@ -464,135 +506,3 @@ void UGridDungeonBuilder::PrintDungeon()
 		UE_LOG(LogTemp, Log, TEXT("%s"), *DungeonRow);
 	}
 }
-
-/*
-void UGridDungeonBuilder::PlaceFloorMarkers()
-{
-	FDungeonMarker FloorMarker;
-	FDungeonMarker WallMarker;
-	FDungeonMarker DoorMarker;
-	FDungeonMarker SeparatorMarker;
-
-	FloorMarker.Transform = FTransform::Identity;
-	WallMarker.Transform = FTransform::Identity;
-	DoorMarker.Transform = FTransform::Identity;
-	SeparatorMarker.Transform = FTransform::Identity;
-
-	auto& FloorMarkers = Markers.Add(TEXT("Floor"));
-	auto& WallMarkers = Markers.Add(TEXT("Wall"));
-	auto& EntranceMarkers = Markers.Add(TEXT("Entrance"));
-	auto& DoorMarkers = Markers.Add(TEXT("Door"));
-	auto& SeparatorMarkers = Markers.Add(TEXT("Separator"));
-
-	float HalfCellSize = BuilderConfig.CellSize * 0.5f;
-	float HalfWallThickness = BuilderConfig.WallThickness * 0.5f;
-	float SizeWithWall = HalfCellSize - HalfWallThickness;
-
-	const FVector SeparatorOffsets[4] = {
-		FVector(HalfCellSize, HalfCellSize, 0.0f),
-		FVector(HalfCellSize, -HalfCellSize, 0.0f),
-		FVector(-HalfCellSize, -HalfCellSize, 0.0f),
-		FVector(-HalfCellSize, HalfCellSize, 0.0f) };
-
-	for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J) {
-		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
-			const int32& Data = DungeonGrid[I][J];
-			int32 CellType = Data & DUNGEON_FLOOR;
-			if (CellType) {
-				const FVector& CellCenter = FVector((I + 0.5f) * BuilderConfig.CellSize, (J + 0.5f) * BuilderConfig.CellSize, 0.0f);
-				FloorMarker.Transform.SetLocation(CellCenter);
-				FloorMarkers.Push(FloorMarker);
-				FRotator Rotation = FRotator::ZeroRotator;
-				int32 SeparatorIndex = 0;
-				for (const auto& Direction : UGridDungeonBuilder::AllDirections) {
-					int32 Row = I + Direction.X;
-					int32 Col = J + Direction.Y;
-
-					WallMarker.Transform.SetLocation(CellCenter + FVector(SizeWithWall * Direction.X, SizeWithWall * Direction.Y, 0.0f));
-					WallMarker.Transform.SetRotation(Rotation.Quaternion());
-
-					SeparatorMarker.Transform.SetLocation(CellCenter + SeparatorOffsets[SeparatorIndex]);
-
-					if (IsCoordsValid(Row, Col)) {
-						const int32& Cell = DungeonGrid[Row][Col];
-						if (!(Cell & CellType)) {							
-							bool IsRoomEntrance = (Cell & ROOM_ENTRANCE) == ROOM_ENTRANCE;
-							bool IsCorridorEntrance = (Data & ROOM_ENTRANCE) && (Cell & DUNGEON_ROOM);
-							if (IsRoomEntrance || IsCorridorEntrance) {
-								EntranceMarkers.Push(WallMarker);
-								if (Data & DUNGEON_ROOM) {
-									DoorMarker.Transform.SetLocation(CellCenter + FVector(HalfCellSize * Direction.X, HalfCellSize * Direction.Y, 0.0f));
-									DoorMarker.Transform.SetRotation(Rotation.Quaternion());
-									DoorMarkers.Push(DoorMarker);
-								}
-							}
-							else {
-								WallMarkers.Push(WallMarker);								
-							}
-							PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
-							SeparatorMarkers.Push(SeparatorMarker);
-						}
-					}
-					else {
-						PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
-						SeparatorMarkers.Push(SeparatorMarker);
-						WallMarkers.Push(WallMarker);
-					}
-					
-					Rotation.Yaw -= 90.0f;
-					++SeparatorIndex;
-				}
-			}
-		}
-	}
-}
-
-void UGridDungeonBuilder::PlaceSeparatorMarker(FDungeonMarker& Marker, int32 I, int32 J, int32 DirectionIndex, const float& HalfWallThickness)
-{
-	int32 NextDirectionIndex = (DirectionIndex + 1) % UGridDungeonBuilder::NumDirections;
-	const FIntPoint& NextDirection = UGridDungeonBuilder::AllDirections[NextDirectionIndex];
-	const FIntPoint& CurrentDirection = UGridDungeonBuilder::AllDirections[DirectionIndex];
-	FIntPoint DiagonalDirection = NextDirection + CurrentDirection;
-
-	const int32& CurrentCell = DungeonGrid[I][J];
-	int32 CellType = CurrentCell & DUNGEON_FLOOR;
-
-	FVector MarkerLocation = Marker.Transform.GetLocation();
-
-	int32 NextRow = I + NextDirection.X;
-	int32 NextCol = J + NextDirection.Y;
-
-	int32 DiagonalRow = I + DiagonalDirection.X;
-	int32 DiagonalCol = J + DiagonalDirection.Y;
-
-	if (IsCoordsValid(NextRow, NextCol)) {
-		const int32& NextCell = DungeonGrid[NextRow][NextCol];
-		if (NextCell & CellType) {
-			if (IsCoordsValid(DiagonalRow, DiagonalCol)) {
-				const int32& DiagonalCell = DungeonGrid[DiagonalRow][DiagonalCol];
-				if (!(DiagonalCell & CellType)) {
-					MarkerLocation.X -= CurrentDirection.X * HalfWallThickness;
-					MarkerLocation.Y -= CurrentDirection.Y * HalfWallThickness;
-					Marker.Transform.SetLocation(MarkerLocation);
-					return;
-				}
-
-				FIntPoint OffsetDirection = NextDirection - CurrentDirection;
-
-				MarkerLocation.X += OffsetDirection.X * HalfWallThickness;
-				MarkerLocation.Y += OffsetDirection.Y * HalfWallThickness;
-				Marker.Transform.SetLocation(MarkerLocation);
-				return;
-			}			
-		}
-	}
-
-	MarkerLocation.X -= DiagonalDirection.X * HalfWallThickness;
-	MarkerLocation.Y -= DiagonalDirection.Y * HalfWallThickness;
-	Marker.Transform.SetLocation(MarkerLocation);
-}
-
-FORCEINLINE const int32 UGridDungeonBuilder::GetRandomDirectionIndex()
-{
-	return FMath::RandRange(0, UGridDungeonBuilder::NumDirections - 1);
-}*/

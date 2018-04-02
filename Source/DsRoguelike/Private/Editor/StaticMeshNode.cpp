@@ -9,8 +9,7 @@ void UStaticMeshNode::Process(const FTransform& MarkerTransform, UWorld* World)
 		return;
 	}
 
-	FTransform WorldTransform = MarkerTransform;
-	WorldTransform.Accumulate(Transform);
+	FTransform WorldTransform = Transform * MarkerTransform;
 
 	auto StaticMeshActor = World->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), WorldTransform, SpawnParameters);
 	if (StaticMeshActor) {

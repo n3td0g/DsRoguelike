@@ -8,9 +8,9 @@
 
 #define ROOM_ENTRANCE		0x00000004
 #define ROOM_DOOR			0x00000008
-#define ROOM_VISITED		0x00000010
+#define ROOM_WINDOW			0x00000010
+#define ROOM_VISITED		0x00000020
 
-#define BLOCK_DOOR		( ROOM_DOOR )
 #define BLOCK_CORRIDOR	( DUNGEON_ROOM | DUNGEON_CORRIDOR )
 #define DUNGEON_FLOOR	( DUNGEON_ROOM | DUNGEON_CORRIDOR )
 
@@ -74,6 +74,9 @@ protected:
 	bool CheckSill(int32 Row, int32 Col, const FIntPoint& CheckDirection);
 	void CheckRooms();
 	bool CheckRoom(FDungeonRoom& Room);
+	void PlaceWindows();
+	void PlaceWindow(FDungeonRoom& Room);
+	bool TryToPlaceWindow(int32 Row, int32 Col, const FIntPoint& CheckDirection);
 
 	//Corridor
 	void CreateCorridors();

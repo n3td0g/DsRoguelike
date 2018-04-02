@@ -22,6 +22,7 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 	FDungeonMarker WallMarker;
 	FDungeonMarker DoorMarker;
 	FDungeonMarker SeparatorMarker;
+	FDungeonMarker WindowMarker;
 
 	FloorMarker.Transform = FTransform::Identity;
 	WallMarker.Transform = FTransform::Identity;
@@ -34,6 +35,7 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 	auto& WallMarkers = DungeonBuilder->Markers.Add(TEXT("Wall"));
 	auto& EntranceMarkers = DungeonBuilder->Markers.Add(TEXT("Entrance"));
 	auto& DoorMarkers = DungeonBuilder->Markers.Add(TEXT("Door"));
+	auto& WindowMarkers = DungeonBuilder->Markers.Add(TEXT("Window"));
 	auto& SeparatorMarkers = DungeonBuilder->Markers.Add(TEXT("Separator"));
 
 	float HalfCellSize = BuilderConfig.CellSize * 0.5f;
@@ -68,8 +70,8 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 					if (DungeonBuilder->IsCoordsValid(Row, Col)) {
 						const int32& Cell = DungeonBuilder->GetCell(Row, Col);
 						if (!(Cell & CellType)) {
-							bool IsRoomEntrance = (Cell & ROOM_ENTRANCE) == ROOM_ENTRANCE;
-							bool IsCorridorEntrance = (Data & ROOM_ENTRANCE) && (Cell & DUNGEON_ROOM);
+							bool IsRoomEntrance = (Data & ROOM_DOOR) && (Cell & ROOM_ENTRANCE);
+							bool IsCorridorEntrance = (Data & ROOM_ENTRANCE) && (Cell & ROOM_DOOR);
 							if (IsRoomEntrance || IsCorridorEntrance) {
 								EntranceMarkers.Push(WallMarker);
 								if (Data & DUNGEON_ROOM) {
@@ -79,7 +81,18 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 								}
 							}
 							else {
-								WallMarkers.Push(WallMarker);
+								bool IsRoomWindow = (Data & ROOM_WINDOW) && (Cell & DUNGEON_CORRIDOR);
+								bool IsCorridorWindow = (Data & DUNGEON_CORRIDOR) && (Cell & ROOM_WINDOW);
+								if (IsRoomWindow || IsCorridorWindow) {
+									if (IsRoomWindow) {
+										WindowMarker.Transform.SetLocation(CellCenter + FVector(HalfCellSize * Direction.X, HalfCellSize * Direction.Y, 0.0f));
+										WindowMarker.Transform.SetRotation(Rotation.Quaternion());
+										WindowMarkers.Push(WindowMarker);
+									}									
+								}
+								else {
+									WallMarkers.Push(WallMarker);
+								}								
 							}
 							PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
 							SeparatorMarkers.Push(SeparatorMarker);
