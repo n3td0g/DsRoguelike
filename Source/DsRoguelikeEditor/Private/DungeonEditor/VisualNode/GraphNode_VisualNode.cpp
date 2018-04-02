@@ -1,7 +1,93 @@
 #include "GraphNode_VisualNode.h"
 #include "Math/Color.h"
 #include "VisualGraphNode.h"
+#include "SGraphPanel.h"
 #include "DungeonTemplatePin.h"
+
+/** Widget for overlaying an execution-order index onto a node */
+class SVisualNodeIndex : public SCompoundWidget
+{
+public:
+	/** Delegate event fired when the hover state of this widget changes */
+	DECLARE_DELEGATE_OneParam(FOnHoverStateChanged, bool /* bHovered */);
+
+	/** Delegate used to receive the color of the node, depending on hover state and state of other siblings */
+	DECLARE_DELEGATE_RetVal_OneParam(FSlateColor, FOnGetIndexColor, bool /* bHovered */);
+
+	SLATE_BEGIN_ARGS(SVisualNodeIndex) {}
+	SLATE_ATTRIBUTE(FText, Text)
+		SLATE_EVENT(FOnHoverStateChanged, OnHoverStateChanged)
+		SLATE_EVENT(FOnGetIndexColor, OnGetIndexColor)
+		SLATE_END_ARGS()
+
+		void Construct(const FArguments& InArgs)
+	{
+		OnHoverStateChangedEvent = InArgs._OnHoverStateChanged;
+		OnGetIndexColorEvent = InArgs._OnGetIndexColor;
+
+		const FSlateBrush* IndexBrush = FEditorStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Index"));
+
+		ChildSlot
+			[
+				SNew(SOverlay)
+				+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				// Add a dummy box here to make sure the widget doesnt get smaller than the brush
+				SNew(SBox)
+				.WidthOverride(IndexBrush->ImageSize.X)
+			.HeightOverride(IndexBrush->ImageSize.Y)
+			]
+		+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			[
+				SNew(SBorder)
+				.BorderImage(IndexBrush)
+			.BorderBackgroundColor(this, &SVisualNodeIndex::GetColor)
+			.Padding(FMargin(4.0f, 0.0f, 4.0f, 1.0f))
+			.VAlign(VAlign_Center)
+			.HAlign(HAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(InArgs._Text)
+			.Font(FEditorStyle::GetFontStyle("BTEditor.Graph.BTNode.IndexText"))
+			]
+			]
+			];
+	}
+
+	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override
+	{
+		OnHoverStateChangedEvent.ExecuteIfBound(true);
+		SCompoundWidget::OnMouseEnter(MyGeometry, MouseEvent);
+	}
+
+	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override
+	{
+		OnHoverStateChangedEvent.ExecuteIfBound(false);
+		SCompoundWidget::OnMouseLeave(MouseEvent);
+	}
+
+	/** Get the color we use to display the rounded border */
+	FSlateColor GetColor() const
+	{
+		if (OnGetIndexColorEvent.IsBound())
+		{
+			return OnGetIndexColorEvent.Execute(IsHovered());
+		}
+
+		return FSlateColor::UseForeground();
+	}
+
+private:
+	/** Delegate event fired when the hover state of this widget changes */
+	FOnHoverStateChanged OnHoverStateChangedEvent;
+
+	/** Delegate used to receive the color of the node, depending on hover state and state of other siblings */
+	FOnGetIndexColor OnGetIndexColorEvent;
+};
 
 void SGraphNode_VisualNode::Construct(const FArguments& InArgs, UVisualGraphNode* InNode)
 {
@@ -25,29 +111,37 @@ void SGraphNode_VisualNode::UpdateGraphNode()
 		[
 			SNew(SBorder)
 			.BorderImage(FEditorStyle::GetBrush("Graph.StateNode.Body"))
-			.Padding(0.0f)
-			.BorderBackgroundColor(FLinearColor::Gray)
-			[
-				SNew(SOverlay)
+		.Padding(0.0f)
+		.BorderBackgroundColor(FLinearColor::Gray)
+		[
+			SNew(SOverlay)
 
-					//TOP INPUT PIN AREA
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Top)
-				[
-					SAssignNew(TopNodeBox, SHorizontalBox)
-				]
-				
-				//NodeWidget
-				+SOverlay::Slot()
-				.HAlign(HAlign_Center)
-				.VAlign(VAlign_Center)
-				.Padding(10.0f)
-				[
-					SAssignNew(NodeWiget, SOverlay)
-				]				
-			]
+			//TOP INPUT PIN AREA
+		+ SOverlay::Slot()
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Top)
+		[
+			SAssignNew(TopNodeBox, SHorizontalBox)
+		]
+
+	//NodeWidget
+	+ SOverlay::Slot()
+		.HAlign(HAlign_Center)
+		.VAlign(VAlign_Center)
+		.Padding(10.0f)
+		[
+			SAssignNew(NodeWiget, SOverlay)
+		]
+		]
 		];
+
+
+	IndexOverlay = SNew(SVisualNodeIndex)
+		.ToolTipText(this, &SGraphNode_VisualNode::GetIndexTooltipText)
+		.Visibility(this, &SGraphNode_VisualNode::GetIndexVisibility)
+		.Text(this, &SGraphNode_VisualNode::GetIndexText)
+		.OnHoverStateChanged(this, &SGraphNode_VisualNode::OnIndexHoverStateChanged)
+		.OnGetIndexColor(this, &SGraphNode_VisualNode::GetIndexColor);
 
 	CreateNodeWidget();
 	CreatePinWidgets();
@@ -97,6 +191,20 @@ bool SGraphNode_VisualNode::IsNameReadOnly() const
 	return true;
 }
 
+TArray<FOverlayWidgetInfo> SGraphNode_VisualNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
+{
+	check(IndexOverlay.IsValid());
+
+	TArray<FOverlayWidgetInfo> Widgets;
+	FVector2D Origin(0.0f, 0.0f);
+
+	FOverlayWidgetInfo Overlay(IndexOverlay);
+	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
+	Widgets.Add(Overlay);
+
+	return Widgets;
+}
+
 const FSlateBrush* SGraphNode_VisualNode::GetNameIcon() const
 {
 	return FEditorStyle::GetBrush(TEXT("Graph.StateNode.Icon"));
@@ -136,11 +244,11 @@ void SGraphNode_VisualNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 	FAssetThumbnailConfig ThumbnailConfig;
 
 	NodeBox->AddSlot()
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
+		.AutoHeight()
+		[
+			SNew(SHorizontalBox)
 
-		+ SHorizontalBox::Slot()
+			+ SHorizontalBox::Slot()
 		.AutoWidth()
 		.VAlign(VAlign_Center)
 		.Padding(4.0f, 4.0f)
@@ -152,24 +260,54 @@ void SGraphNode_VisualNode::AddNodeStrings(TSharedPtr<SVerticalBox> NodeBox)
 			Thumbnail->MakeThumbnailWidget(ThumbnailConfig)
 		]
 		]
+		];
+}
 
-		/*+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		[
-			SNew(SImage)
-			.Image(NodeTypeIcon)
-		]*/
-		/*+ SHorizontalBox::Slot()
-		.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-		[
-			SNew(SImage)
-			.Image(NodeIcon)
-			SNew(STextBlock)
-			.Text(FText::FromString(TEXT("Test")))
-			.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 16))
-		]*/
+EVisibility SGraphNode_VisualNode::GetIndexVisibility() const
+{
+	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
+	return (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail) ? EVisibility::Visible : EVisibility::Collapsed;
+}
 
-	];
+FText SGraphNode_VisualNode::GetIndexText() const
+{
+	UVisualGraphNode* StateNode = CastChecked<UVisualGraphNode>(GraphNode);
+	UEdGraphPin* MyInputPin = StateNode->GetInputPin();
+	UEdGraphPin* MyParentOutputPin = NULL;
+	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
+	{
+		MyParentOutputPin = MyInputPin->LinkedTo[0];
+	}
+
+	int32 Index = 0;
+
+	if (MyParentOutputPin != NULL)
+	{
+		for (Index = 0; Index < MyParentOutputPin->LinkedTo.Num(); ++Index)
+		{
+			if (MyParentOutputPin->LinkedTo[Index] == MyInputPin)
+			{
+				break;
+			}
+		}
+	}
+
+	return FText::AsNumber(Index);
+}
+
+FText SGraphNode_VisualNode::GetIndexTooltipText() const
+{
+	return FText::FromString("Visual node index");
+}
+
+FSlateColor SGraphNode_VisualNode::GetIndexColor(bool bHovered) const
+{
+	static const FName DefaultColor("BTEditor.Graph.BTNode.Index.Color");
+	return FEditorStyle::Get().GetSlateColor(DefaultColor);
+}
+
+void SGraphNode_VisualNode::OnIndexHoverStateChanged(bool bHovered)
+{
+
 }
 

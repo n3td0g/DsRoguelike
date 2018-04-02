@@ -30,3 +30,25 @@ const UObject* UVisualGraphNode::GetObject()
 
 	return VisualNode->GetObject();
 }
+
+UEdGraphPin* UVisualGraphNode::GetInputPin(int32 InputIndex) const
+{
+	check(InputIndex >= 0);
+
+	for (int32 PinIndex = 0, FoundInputs = 0; PinIndex < Pins.Num(); PinIndex++)
+	{
+		if (Pins[PinIndex]->Direction == EGPD_Input)
+		{
+			if (InputIndex == FoundInputs)
+			{
+				return Pins[PinIndex];
+			}
+			else
+			{
+				FoundInputs++;
+			}
+		}
+	}
+
+	return nullptr;
+}

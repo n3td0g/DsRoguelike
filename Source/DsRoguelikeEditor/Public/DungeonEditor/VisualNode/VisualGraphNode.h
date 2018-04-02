@@ -22,6 +22,8 @@ public:
 
 	const UObject* GetObject();
 
+	UEdGraphPin* GetInputPin(int32 InputIndex = 0) const;
+
 public:
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "Visual Node")
 	class UVisualNode* VisualNode;
