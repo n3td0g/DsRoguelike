@@ -19,9 +19,11 @@ public:
 	virtual void Process(const FTransform& MarkerTransform, UWorld* World) override;
 
 #if WITH_EDITOR
+	virtual void PostEditImport() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #endif
+	virtual void Serialize(FArchive& Ar) override;
 
 	AActor* GetActorTemplate() const { return ActorTemplate; }
 	virtual UObject* GetObject() override;

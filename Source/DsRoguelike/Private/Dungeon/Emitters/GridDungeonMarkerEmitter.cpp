@@ -35,6 +35,8 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 	auto& WallMarkers = DungeonBuilder->Markers.Add(TEXT("Wall"));
 	auto& EntranceMarkers = DungeonBuilder->Markers.Add(TEXT("Entrance"));
 	auto& DoorMarkers = DungeonBuilder->Markers.Add(TEXT("Door"));
+	auto& WallTorchMarkers = DungeonBuilder->Markers.Add(TEXT("WallTorch"));
+	auto& FloorTorchMarkers = DungeonBuilder->Markers.Add(TEXT("FloorTorch"));
 	auto& WindowMarkers = DungeonBuilder->Markers.Add(TEXT("Window"));
 	auto& SeparatorMarkers = DungeonBuilder->Markers.Add(TEXT("Separator"));
 
@@ -58,7 +60,10 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 				FloorMarkers.Push(FloorMarker);
 				FRotator Rotation = FRotator::ZeroRotator;
 				int32 SeparatorIndex = 0;
-				for (const auto& Direction : FDungeonDirections::AllDirections) {
+				auto& TorchMarkers = Data & DUNGEON_ROOM ? FloorTorchMarkers : WallTorchMarkers;
+
+				for (const auto& Direction : FDungeonDirections::AllDirections) {				
+
 					int32 Row = I + Direction.X;
 					int32 Col = J + Direction.Y;
 
@@ -81,10 +86,9 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 								}
 							}
 							else {
-								bool IsRoomWindow = (Data & ROOM_WINDOW) && (Cell & DUNGEON_CORRIDOR);
-								bool IsCorridorWindow = (Data & DUNGEON_CORRIDOR) && (Cell & ROOM_WINDOW);
-								if (IsRoomWindow || IsCorridorWindow) {
-									if (IsRoomWindow) {
+								bool IsWindow = (Data & ROOM_WINDOW) && (Cell & ROOM_WINDOW);								
+								if (IsWindow) {
+									if (Data & DUNGEON_ROOM) {
 										WindowMarker.Transform.SetLocation(CellCenter + FVector(HalfCellSize * Direction.X, HalfCellSize * Direction.Y, 0.0f));
 										WindowMarker.Transform.SetRotation(Rotation.Quaternion());
 										WindowMarkers.Push(WindowMarker);
@@ -92,6 +96,7 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 								}
 								else {
 									WallMarkers.Push(WallMarker);
+									TryToPlaceTorch(TorchMarkers, WallMarker.Transform);
 								}								
 							}
 							PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
@@ -102,6 +107,7 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 						PlaceSeparatorMarker(SeparatorMarker, I, J, SeparatorIndex, HalfWallThickness);
 						SeparatorMarkers.Push(SeparatorMarker);
 						WallMarkers.Push(WallMarker);
+						TryToPlaceTorch(TorchMarkers, WallMarker.Transform);
 					}
 
 					Rotation.Yaw -= 90.0f;
@@ -155,4 +161,12 @@ void UGridDungeonMarkerEmitter::PlaceSeparatorMarker(FDungeonMarker& Marker, int
 	MarkerLocation.X -= DiagonalDirection.X * HalfWallThickness;
 	MarkerLocation.Y -= DiagonalDirection.Y * HalfWallThickness;
 	Marker.Transform.SetLocation(MarkerLocation);
+}
+
+void UGridDungeonMarkerEmitter::TryToPlaceTorch(TArray<FDungeonMarker>& TorchMarkers, const FTransform& MarkerTransform)
+{
+	if (FMath::FRand() > ChanceToPlaceTorch) {
+		return;
+	}
+	TorchMarkers.Add(FDungeonMarker(MarkerTransform));
 }

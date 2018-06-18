@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class DSROGUELIKE_API UMarkerEmitter : public UObject
 {
 	GENERATED_BODY()

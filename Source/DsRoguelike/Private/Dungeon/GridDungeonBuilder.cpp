@@ -3,8 +3,6 @@
 #include "GridDungeonBuilder.h"
 #include "DungeonDirections.h"
 
-#pragma optimize("", off)
-
 UGridDungeonBuilder::UGridDungeonBuilder()
 {
 	RootLeaf = nullptr;
@@ -360,9 +358,11 @@ bool UGridDungeonBuilder::TryToPlaceWindow(int32 Row, int32 Col, const FIntPoint
 		return false;
 	}
 
-	if (DungeonGrid[NextR][NextC] & DUNGEON_CORRIDOR) {
+	int32& Data = DungeonGrid[NextR][NextC];
+	if (Data & DUNGEON_CORRIDOR) {
 		if (FMath::FRand() < BuilderConfig.ChangeToPlaceWindow) {
 			DungeonGrid[Row][Col] |= ROOM_WINDOW;
+			Data |= ROOM_WINDOW;
 			return true;
 		}
 	}
@@ -469,7 +469,7 @@ void UGridDungeonBuilder::CollapseCorridor(int32 I, int32 J)
 
 	if (NumWays < 2) {
 		int32 &Cell = DungeonGrid[I][J];
-		Cell &= ~(DUNGEON_CORRIDOR | ROOM_ENTRANCE);
+		Cell &= ~(DUNGEON_CORRIDOR | ROOM_ENTRANCE | ROOM_WINDOW);
 		if (NumWays == 1) {
 			CollapseCorridor(Way.X, Way.Y);
 		}
