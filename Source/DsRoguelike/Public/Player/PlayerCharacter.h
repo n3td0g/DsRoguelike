@@ -4,66 +4,143 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "PlayerAction.h"
 #include "PlayerCharacter.generated.h"
+
+class UAnimMontage;
 
 UCLASS()
 class DSROGUELIKE_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
-	/** Camera boom positioning the camera behind the character */
-		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* CameraBoom;
-
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+	
 public:
 	APlayerCharacter();
 
-	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
+public:
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	UFUNCTION(BlueprintCallable)
+	void StopCurrentAction();
+
+	UFUNCTION(BlueprintCallable)
+	void ExecuteAction(EActionType ActionType);
+
+	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
+	virtual void BeginPlay() override;
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	UAnimMontage* MontageToPlay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* RollAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* JumpAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* AttackAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* BounceAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* UseAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* InteractAnimMontage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseTurnRate;
 
-	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
-protected:
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Action)
+	float ActionMemoryTime = 1.5f;
 
-	/** Called for side to side input */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Action)
+	float MinRunKeyHoldTime = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float MovementScaleInterpSpeed = 0.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float RunMovementScale = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float DefaultMovementScale = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float BlockMovementScale = 0.5f;
+
+protected:
+	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	/**
-	* Called via input to turn at a given rate.
-	* @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	*/
 	void TurnAtRate(float Rate);
-
-	/**
-	* Called via input to turn look up/down at a given rate.
-	* @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	*/
 	void LookUpAtRate(float Rate);
-
-	/** Handler for when a touch input begins. */
 	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	// End of APawn interface
+	void Run();
+	void StopRunning();
 
-public:
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	
-	
+	void Attack();
+
+	void Block();
+	void StopBlocking();
+
+	void Use();
+	void Interact();
+
+	void SetCurrentAction(EActionType ActionType);
+	bool TryToSetMontage(UAnimMontage* NewMontage);
+
+	void SetMovementScale(float NewMovementScale);
+	void RotateCharaterToMovement();
+
+protected:
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	template<typename TEnum>
+	static FORCEINLINE FString GetEnumValueAsString(const FString& Name, TEnum Value)
+	{
+		const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, *Name, true);
+		if (!enumPtr)
+		{
+			return FString("Invalid");
+		}
+		return enumPtr->GetNameByValue((int64)Value).ToString();
+	}
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(BlueprintReadOnly)
+	FPlayerAction CurrentAction;
+
+	UPROPERTY(BlueprintReadOnly)
+	float MovementScale = 1.0f;
+private:
+	UPROPERTY(Transient)
+	FVector2D InputVector;	
+
+	UPROPERTY(Transient)
+	float TargetMovementScale = 1.0f;
+
+	UPROPERTY(Transient)
+	bool bPressedRun = false;
+
+	UPROPERTY(Transient)
+	float RunKeyHoldTime = 0.0;
+
+	UPROPERTY(Transient)
+	TArray<FPlayerAction> ActionsMemory;	
 };

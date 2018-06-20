@@ -1,12 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#include "PlayerCharacter.h"
-
+﻿#include "PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "DrawDebugHelpers.h"
+#include "Animation/AnimMontage.h"
 #include "GameFramework/SpringArmComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -47,6 +46,69 @@ APlayerCharacter::APlayerCharacter()
 												   // are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
 
+void APlayerCharacter::StopCurrentAction()
+{
+	switch (CurrentAction.ActionType)
+	{
+	case EActionType::AT_Roll:
+		SetMovementScale(DefaultMovementScale);
+	default:
+		break;
+	}
+
+	TargetMovementScale = DefaultMovementScale;
+	MontageToPlay = nullptr;
+	CurrentAction.ActionType = EActionType::AT_Idle;
+}
+
+void APlayerCharacter::ExecuteAction(EActionType ActionType)
+{
+	if (CurrentAction.ActionType == EActionType::AT_Idle) {
+		SetCurrentAction(ActionType);
+	}
+	else {
+		ActionsMemory.Insert(FPlayerAction(GetWorld()->TimeSeconds, ActionType), 0);
+	}
+}
+
+void APlayerCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
+{
+	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+	float TimeToCheck = GetWorld()->TimeSeconds - ActionMemoryTime;
+	for (int32 I = ActionsMemory.Num() - 1; I >= 0; --I) {
+		if (ActionsMemory[I].ExecuteTime < TimeToCheck) {
+			ActionsMemory.RemoveAt(I);
+		}
+		else {
+			break;
+		}
+	}
+
+	if (CurrentAction.ActionType == EActionType::AT_Idle && ActionsMemory.Num() > 0) {
+		SetCurrentAction(ActionsMemory[0].ActionType);
+		ActionsMemory.RemoveAt(0);
+	}
+
+	if (bPressedRun) {
+		RunKeyHoldTime += DeltaTime;
+		if (RunKeyHoldTime > MinRunKeyHoldTime) {
+			if (CurrentAction.ActionType == EActionType::AT_Idle) {
+				ExecuteAction(EActionType::AT_Run);
+			}
+			bPressedRun = false;
+		}
+	}
+
+	MovementScale = FMath::FInterpTo(MovementScale, TargetMovementScale, DeltaTime, MovementScaleInterpSpeed);
+}
+
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetMovementScale(DefaultMovementScale);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -54,8 +116,17 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &APlayerCharacter::Run);
+	PlayerInputComponent->BindAction("Run", IE_Released, this, &APlayerCharacter::StopRunning);
+
+	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &APlayerCharacter::Use);
+
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &APlayerCharacter::Attack);
+
+	PlayerInputComponent->BindAction("Block", IE_Pressed, this, &APlayerCharacter::Block);
+	PlayerInputComponent->BindAction("Block", IE_Released, this, &APlayerCharacter::StopBlocking);
+
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
@@ -73,7 +144,6 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindTouch(IE_Released, this, &APlayerCharacter::TouchStopped);
 }
 
-
 void APlayerCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
 	Jump();
@@ -82,6 +152,148 @@ void APlayerCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Locat
 void APlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 	StopJumping();
+}
+
+void APlayerCharacter::Run()
+{
+	bPressedRun = false;
+	if (MovementScale > DefaultMovementScale) {
+		ExecuteAction(EActionType::AT_Jump);
+		return;
+	}
+
+	if (InputVector.SizeSquared() > 0.0f) {
+		RunKeyHoldTime = 0.0f;
+		bPressedRun = true;
+	}
+	else {
+		ExecuteAction(EActionType::AT_Bounce);
+	}	
+}
+
+void APlayerCharacter::StopRunning()
+{
+	if (bPressedRun && RunKeyHoldTime < MinRunKeyHoldTime) {
+		ExecuteAction(EActionType::AT_Roll);	
+	}
+	else {
+		if (CurrentAction.ActionType == EActionType::AT_Run) {
+			StopCurrentAction();
+		}		
+	}
+
+	bPressedRun = false;
+}
+
+void APlayerCharacter::Attack()
+{
+	if (CurrentAction.ActionType == EActionType::AT_Run) {
+		StopCurrentAction();
+	}
+
+	ExecuteAction(EActionType::AT_Attack);
+}
+
+void APlayerCharacter::Block()
+{
+	ExecuteAction(EActionType::AT_Block);
+}
+
+void APlayerCharacter::StopBlocking()
+{
+	StopCurrentAction();
+}
+
+void APlayerCharacter::Use()
+{
+	ExecuteAction(EActionType::AT_Use);
+}
+
+void APlayerCharacter::Interact()
+{
+	ExecuteAction(EActionType::AT_Interact);
+}
+
+void APlayerCharacter::SetCurrentAction(EActionType ActionType)
+{
+	FString ParseLine = GetEnumValueAsString<EActionType>("EActionType", ActionType);
+	UE_LOG(LogTemp, Log, TEXT("New ActionType: %s"), *ParseLine);
+
+	StopCurrentAction();
+	UPawnMovementComponent* MovementComponent = GetMovementComponent();
+	CurrentAction.ActionType = ActionType;
+	switch (ActionType)
+	{
+	case EActionType::AT_Attack:		
+		TryToSetMontage(AttackAnimMontage);
+		break;
+	case EActionType::AT_Roll:
+		RotateCharaterToMovement();
+		TryToSetMontage(RollAnimMontage);
+		break;
+	case EActionType::AT_Block:
+		TargetMovementScale = BlockMovementScale;
+		break;
+	case EActionType::AT_Run:
+		TargetMovementScale = RunMovementScale;
+		break;
+	case EActionType::AT_Jump:
+		TryToSetMontage(JumpAnimMontage);		
+		break;
+	case EActionType::AT_Bounce:
+		TryToSetMontage(BounceAnimMontage);
+		break;
+	case EActionType::AT_Use:
+		TryToSetMontage(UseAnimMontage);
+		break;
+	case EActionType::AT_Interact:
+		TryToSetMontage(InteractAnimMontage);
+		break;
+	default:
+		break;
+	}
+}
+
+bool APlayerCharacter::TryToSetMontage(UAnimMontage* NewMontage)
+{
+	if (!NewMontage) {
+		StopCurrentAction();
+		return false;
+	}
+
+	SetMovementScale(0.0f);
+	MontageToPlay = NewMontage;
+	return true;
+}
+
+void APlayerCharacter::SetMovementScale(float NewMovementScale)
+{
+	MovementScale = NewMovementScale;
+	TargetMovementScale = NewMovementScale;
+}
+
+void APlayerCharacter::RotateCharaterToMovement()
+{
+	if (!Controller) {
+		return;
+	}
+
+	if (InputVector.SizeSquared() > 0.0f) {
+		const FRotator& Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
+
+		// get forward vector
+		const FRotationMatrix RotationMatrix(YawRotation);
+		const FVector ForwardDirection = RotationMatrix.GetUnitAxis(EAxis::X) * InputVector.X;
+		const FVector RightDirection = RotationMatrix.GetUnitAxis(EAxis::Y) * InputVector.Y;
+
+		FVector Direction = ForwardDirection + RightDirection;
+		Direction.Normalize();
+
+		FRotator ActorRotation = GetActorRotation();
+		ActorRotation.Yaw = FMath::RadiansToDegrees(FMath::Atan2(Direction.Y, Direction.X));
+		SetActorRotation(ActorRotation);
+	}
 }
 
 void APlayerCharacter::TurnAtRate(float Rate)
@@ -98,29 +310,31 @@ void APlayerCharacter::LookUpAtRate(float Rate)
 
 void APlayerCharacter::MoveForward(float Value)
 {
+	InputVector.X = Value;
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
+		AddMovementInput(Direction, Value * MovementScale);
 	}
 }
 
 void APlayerCharacter::MoveRight(float Value)
 {
+	InputVector.Y = Value;
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
-		AddMovementInput(Direction, Value);
+		AddMovementInput(Direction, Value * MovementScale);
 	}
 }
