@@ -48,7 +48,7 @@ void ABaseMeleeWeapon::Attack()
 		const FVector& StartLocation = PrevLocations[I];
 
 		TArray<FHitResult> HitResults;
-		UKismetSystemLibrary::LineTraceMulti(GetWorld(), StartLocation, EndLocation, TraceType, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResults, true);
+		UKismetSystemLibrary::LineTraceMulti(GetWorld(), StartLocation, EndLocation, TraceType, false, ActorsToIgnore, EDrawDebugTrace::None, HitResults, true);
 		
 		for (const auto& Hit : HitResults) {
 			if (!Hit.bBlockingHit) {

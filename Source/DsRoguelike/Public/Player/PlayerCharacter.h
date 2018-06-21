@@ -30,6 +30,9 @@ public:
 	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable)
+	bool IsBackstabAvailable(const FVector& Location, const FVector& Direction);
+
 public:
 	UPROPERTY(BlueprintReadOnly)
 	UAnimMontage* MontageToPlay;
@@ -44,6 +47,9 @@ public:
 	UAnimMontage* AttackAnimMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* AttackOnRunAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* BounceAnimMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
@@ -52,11 +58,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* InteractAnimMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* BackstabAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* BackstabAttackAnimMontage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseTurnRate;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Action)
+	float AttackOnRunSpeed = 400.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Action)
 	float ActionMemoryTime = 1.5f;
@@ -79,6 +94,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	float BlockMovementScale = 0.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
+	float BackstabMinDot = 0.7f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
+	float BackstabMaxVelocity = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
+	float BackstabDistance = 100.0f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	TEnumAsByte<ETraceTypeQuery> BackstabTraceType;
+
 protected:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -98,6 +125,9 @@ protected:
 
 	void Use();
 	void Interact();
+
+	void Backstab();
+	APlayerCharacter* TryToBackstab();
 
 	void SetCurrentAction(EActionType ActionType);
 	bool TryToSetMontage(UAnimMontage* NewMontage);

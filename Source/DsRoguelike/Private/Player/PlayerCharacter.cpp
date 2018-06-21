@@ -2,6 +2,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "DrawDebugHelpers.h"
@@ -109,6 +110,44 @@ void APlayerCharacter::BeginPlay()
 	SetMovementScale(DefaultMovementScale);
 }
 
+bool APlayerCharacter::IsBackstabAvailable(const FVector& Location, const FVector& Direction)
+{
+	if (GetVelocity().SizeSquared() > (BackstabMaxVelocity * BackstabMaxVelocity)) {
+		UE_LOG(LogTemp, Log, TEXT("Enemy velocity too high"));
+		return false;
+	}
+
+	switch (CurrentAction.ActionType)
+	{
+	case EActionType::AT_Backstab:
+	case EActionType::AT_BackstabAttack:
+	case EActionType::AT_Bounce:
+	case EActionType::AT_Jump:
+	case EActionType::AT_Run:
+		UE_LOG(LogTemp, Log, TEXT("Wrong action"));
+		return false;
+	default:
+		break;
+	}
+
+	const FVector& Forward = GetActorForwardVector();
+	if (FVector::DotProduct(Forward, Direction) < BackstabMinDot) {
+		UE_LOG(LogTemp, Log, TEXT("Wrong attack direction"));
+		return false;
+	}
+
+	FVector AttackDirection = GetActorLocation() - Location;
+	AttackDirection.Z = 0.0f;
+	AttackDirection.Normalize();
+
+	if (FVector::DotProduct(Forward, AttackDirection) < BackstabMinDot) {
+		UE_LOG(LogTemp, Log, TEXT("Wrong attack location"));
+		return false;
+	}
+
+	return true;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -195,11 +234,22 @@ void APlayerCharacter::StopRunning()
 
 void APlayerCharacter::Attack()
 {
-	if (CurrentAction.ActionType == EActionType::AT_Run) {
-		StopCurrentAction();
+	if (auto Enemy = TryToBackstab()) {
+		Enemy->Backstab();
+		ExecuteAction(EActionType::AT_BackstabAttack);
 	}
+	else {
+		if (CurrentAction.ActionType == EActionType::AT_Run) {
+			StopCurrentAction();
+		}
 
-	ExecuteAction(EActionType::AT_Attack);
+		if (GetVelocity().Size() > AttackOnRunSpeed) {
+			ExecuteAction(EActionType::AT_AttackOnRun);
+		}
+		else {
+			ExecuteAction(EActionType::AT_Attack);
+		}		
+	}	
 }
 
 void APlayerCharacter::Block()
@@ -222,6 +272,41 @@ void APlayerCharacter::Interact()
 	ExecuteAction(EActionType::AT_Interact);
 }
 
+void APlayerCharacter::Backstab()
+{
+	StopCurrentAction();
+	ExecuteAction(EActionType::AT_Backstab);
+}
+
+APlayerCharacter* APlayerCharacter::TryToBackstab()
+{
+	if (CurrentAction.ActionType != EActionType::AT_Idle) {
+		return nullptr;
+	}
+
+	if (InputVector.SizeSquared() > 0.1f) {
+		return nullptr;
+	}
+
+	if (GetVelocity().Size() > BackstabMaxVelocity) {
+		return nullptr;
+	}
+
+	const FVector EndLocation = GetActorLocation() + GetActorForwardVector() * BackstabDistance;
+	FHitResult HitResult;
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Push(this);
+	if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), EndLocation, BackstabTraceType, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true, FLinearColor::Blue)) {
+		auto Enemy = Cast<APlayerCharacter>(HitResult.GetActor());
+		if (Enemy) {
+			if (Enemy->IsBackstabAvailable(HitResult.ImpactPoint, GetActorForwardVector())) {
+				return Enemy;
+			}
+		}
+	}
+	return nullptr;
+}
+
 void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 {
 	FString ParseLine = GetEnumValueAsString<EActionType>("EActionType", ActionType);
@@ -234,6 +319,9 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 	{
 	case EActionType::AT_Attack:		
 		TryToSetMontage(AttackAnimMontage);
+		break;
+	case EActionType::AT_AttackOnRun:
+		TryToSetMontage(AttackOnRunAnimMontage);
 		break;
 	case EActionType::AT_Roll:
 		RotateCharaterToMovement();
@@ -256,6 +344,12 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 		break;
 	case EActionType::AT_Interact:
 		TryToSetMontage(InteractAnimMontage);
+		break;
+	case EActionType::AT_Backstab:
+		TryToSetMontage(BackstabAnimMontage);
+		break;
+	case EActionType::AT_BackstabAttack:
+		TryToSetMontage(BackstabAttackAnimMontage);
 		break;
 	default:
 		break;
