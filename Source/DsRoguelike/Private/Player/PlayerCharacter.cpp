@@ -173,7 +173,7 @@ void APlayerCharacter::Run()
 		bPressedRun = true;
 	}
 	else {
-		if (MovementScale < DefaultMovementScale - Epsilon) {
+		if (MovementScale < DefaultMovementScale + Epsilon) {
 			ExecuteAction(EActionType::AT_Bounce);
 		}		
 	}	
