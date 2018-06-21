@@ -71,6 +71,9 @@ public:
 	float RunMovementScale = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float MinMovementScaleForJump = 0.7f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	float DefaultMovementScale = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)

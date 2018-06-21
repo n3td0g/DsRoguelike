@@ -156,18 +156,26 @@ void APlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locat
 
 void APlayerCharacter::Run()
 {
+	if (GetCharacterMovement()->IsFalling()) {
+		return;
+	}
+
 	bPressedRun = false;
-	if (MovementScale > DefaultMovementScale) {
+	if (MovementScale > MinMovementScaleForJump) {
 		ExecuteAction(EActionType::AT_Jump);
 		return;
 	}
 
-	if (InputVector.SizeSquared() > 0.0f) {
+	const float Epsilon = 0.00001f;
+
+	if (InputVector.SizeSquared() > Epsilon) {
 		RunKeyHoldTime = 0.0f;
 		bPressedRun = true;
 	}
 	else {
-		ExecuteAction(EActionType::AT_Bounce);
+		if (MovementScale < DefaultMovementScale - Epsilon) {
+			ExecuteAction(EActionType::AT_Bounce);
+		}		
 	}	
 }
 
