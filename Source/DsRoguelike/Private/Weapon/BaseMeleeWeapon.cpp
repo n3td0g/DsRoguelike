@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BaseMeleeWeapon.h"
+#include "TraceComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
@@ -8,10 +9,6 @@ ABaseMeleeWeapon::ABaseMeleeWeapon()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("WeaponMesh");
-	RootComponent = WeaponMesh;
-
 }
 
 void ABaseMeleeWeapon::StartAttack()
@@ -37,7 +34,12 @@ void ABaseMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	WeaponMesh->GetChildrenComponents(false, ComponentsForTrace);
+	auto Components = GetComponentsByClass(UTraceComponent::StaticClass());
+	for (auto Component : Components) {
+		if (auto SceneComponent = Cast<USceneComponent>(Component)) {
+			ComponentsForTrace.Push(SceneComponent);
+		}		
+	}
 }
 
 void ABaseMeleeWeapon::Attack()
@@ -48,7 +50,7 @@ void ABaseMeleeWeapon::Attack()
 		const FVector& StartLocation = PrevLocations[I];
 
 		TArray<FHitResult> HitResults;
-		UKismetSystemLibrary::LineTraceMulti(GetWorld(), StartLocation, EndLocation, TraceType, false, ActorsToIgnore, EDrawDebugTrace::None, HitResults, true);
+		UKismetSystemLibrary::LineTraceMulti(GetWorld(), StartLocation, EndLocation, TraceType, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResults, true);
 		
 		for (const auto& Hit : HitResults) {
 			if (!Hit.bBlockingHit) {

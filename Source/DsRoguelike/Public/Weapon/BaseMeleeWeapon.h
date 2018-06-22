@@ -29,9 +29,6 @@ protected:
 	void Attack();
 
 protected:
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	UStaticMeshComponent* WeaponMesh;
-
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TEnumAsByte<ETraceTypeQuery> TraceType;
 
