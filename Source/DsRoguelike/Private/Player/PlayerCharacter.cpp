@@ -1,8 +1,11 @@
 ﻿#include "PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "LookTargetComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/InputComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "DrawDebugHelpers.h"
@@ -45,6 +48,14 @@ APlayerCharacter::APlayerCharacter()
 
 												   // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 												   // are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	TargetDetector = CreateDefaultSubobject<USphereComponent>(TEXT("TargetDetector"));
+	TargetDetector->SetupAttachment(RootComponent);
+	TargetDetector->SetSphereRadius(1000.0f);
+	TargetDetector->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	TargetDetector->SetCollisionResponseToAllChannels(ECR_Ignore);
+	TargetDetector->SetCollisionObjectType(ECC_WorldDynamic);
+	TargetDetector->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 }
 
 void APlayerCharacter::StopCurrentAction()
@@ -75,6 +86,7 @@ void APlayerCharacter::ExecuteAction(EActionType ActionType)
 void APlayerCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
 {
 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+
 	float TimeToCheck = GetWorld()->TimeSeconds - ActionMemoryTime;
 	for (int32 I = ActionsMemory.Num() - 1; I >= 0; --I) {
 		if (ActionsMemory[I].ExecuteTime < TimeToCheck) {
@@ -101,6 +113,8 @@ void APlayerCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FAct
 	}
 
 	MovementScale = FMath::FInterpTo(MovementScale, TargetMovementScale, DeltaTime, MovementScaleInterpSpeed);
+	ApplyMovementInput();
+	LookToTarget();
 }
 
 void APlayerCharacter::BeginPlay()
@@ -166,6 +180,7 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAction("Block", IE_Released, this, &APlayerCharacter::StopBlocking);
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
+	PlayerInputComponent->BindAction("ToggleTarget", IE_Pressed, this, &APlayerCharacter::ToggleTarget);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
@@ -398,45 +413,99 @@ void APlayerCharacter::RotateCharaterToMovement()
 	}
 }
 
+void APlayerCharacter::LookToTarget()
+{
+	if (Target) {
+		float TargetDistanceSquared = (GetActorLocation() - Target->GetComponentLocation()).SizeSquared();
+		if (TargetDistanceSquared > TargetBreakDistance * TargetBreakDistance) {
+			ToggleTarget();
+			return;
+		}
+
+		FRotator NewControlRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetComponentLocation());
+		NewControlRotation.Pitch += LookToTargetPitchOffset;
+		const FRotator& CurrentRotation = Controller->GetControlRotation();
+		const FRotator& TargetControllerRotation = FMath::RInterpTo(CurrentRotation, NewControlRotation, GetWorld()->DeltaTimeSeconds, RotateCameraToTargetSpeed);
+		Controller->SetControlRotation(TargetControllerRotation);
+
+		if (CurrentAction.ActionType == EActionType::AT_Idle) {
+			GetCharacterMovement()->bOrientRotationToMovement = false;
+			const FRotator& Rotation = Controller->GetControlRotation();
+			const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
+			const FRotator& CurrentRotation = GetActorRotation();
+			const FRotator& TargetRotation = FMath::RInterpTo(CurrentRotation, YawRotation, GetWorld()->DeltaTimeSeconds, RotateToTargetSpeed);
+			SetActorRotation(TargetRotation);
+		}
+		else{
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+	}
+}
+
+void APlayerCharacter::ToggleTarget()
+{
+	if (Target) {
+		Target->DeactivateTarget();
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		Target = nullptr;
+		return;
+	}
+	TArray<AActor*> OtherCharacters;
+	TargetDetector->GetOverlappingActors(OtherCharacters, ACharacter::StaticClass());
+	for (auto Character : OtherCharacters) {
+		if (Character != this) {
+			Target = Character->FindComponentByClass<ULookTargetComponent>();
+			if (Target) {
+				Target->ActivateTarget(FollowCamera);
+				return;
+			}			
+		}
+	}
+}
+
 void APlayerCharacter::TurnAtRate(float Rate)
 {
+	if (Target) {
+		return;
+	}
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
 
 void APlayerCharacter::LookUpAtRate(float Rate)
 {
+	if (Target) {
+		return;
+	}
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::ApplyMovementInput()
+{
+	if ((Controller != NULL) && (InputVector.SizeSquared() != 0.0f) && MovementScale > 0.0f)
+	{
+		// find out which way is right
+		const FRotator& Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
+
+		// get right vector 
+		const FVector& DirectionY = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		const FVector& DirectionX = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		FVector Direction = DirectionX * InputVector.X + DirectionY * InputVector.Y;
+		Direction.Normalize();
+		// add movement in that direction
+		AddMovementInput(Direction, MovementScale);
+	}
 }
 
 void APlayerCharacter::MoveForward(float Value)
 {
 	InputVector.X = Value;
-	if ((Controller != NULL) && (Value != 0.0f))
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value * MovementScale);
-	}
 }
 
 void APlayerCharacter::MoveRight(float Value)
 {
 	InputVector.Y = Value;
-	if ((Controller != NULL) && (Value != 0.0f))
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value * MovementScale);
-	}
 }

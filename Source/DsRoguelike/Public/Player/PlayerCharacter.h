@@ -34,6 +34,21 @@ public:
 	bool IsBackstabAvailable(const FVector& Location, const FVector& Direction);
 
 public:
+	UPROPERTY(BlueprintReadWrite)
+	class ULookTargetComponent* Target;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Target)
+	float LookToTargetPitchOffset = 15.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Target)
+	float TargetBreakDistance = 1000.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Target)
+	float RotateToTargetSpeed = 10.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Target)
+	float RotateCameraToTargetSpeed = 10.0f;
+
 	UPROPERTY(BlueprintReadOnly)
 	UAnimMontage* MontageToPlay;
 
@@ -105,8 +120,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TEnumAsByte<ETraceTypeQuery> BackstabTraceType;
-
 protected:
+	void ApplyMovementInput();
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
@@ -134,6 +150,8 @@ protected:
 
 	void SetMovementScale(float NewMovementScale);
 	void RotateCharaterToMovement();
+	void LookToTarget();
+	void ToggleTarget();
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -150,6 +168,9 @@ protected:
 	}
 
 protected:
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = Target, meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* TargetDetector;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
