@@ -22,7 +22,10 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	UFUNCTION(BlueprintCallable)
-	void StopCurrentAction();
+	void CurrentActionEnded();
+
+	UFUNCTION(BlueprintCallable)
+	void StopCurrentAction(float BlendOutTime = 0.5f);
 
 	UFUNCTION(BlueprintCallable)
 	void ExecuteAction(EActionType ActionType);
@@ -54,6 +57,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* RollAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	int32 AttackSectionNum = 3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* JumpAnimMontage;
@@ -131,14 +137,23 @@ protected:
 	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
+	UFUNCTION(BlueprintCallable)
+	bool ContinueCurrentAction(FName& NewSection, FName& NextSection);
+
+	UFUNCTION(BlueprintCallable)
 	void Run();
+	UFUNCTION(BlueprintCallable)
 	void StopRunning();
 
+	UFUNCTION(BlueprintCallable)
 	void Attack();
 
+	UFUNCTION(BlueprintCallable)
 	void Block();
+	UFUNCTION(BlueprintCallable)
 	void StopBlocking();
 
+	UFUNCTION(BlueprintCallable)
 	void Use();
 	void Interact();
 
@@ -183,6 +198,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	float MovementScale = 1.0f;
 private:
+	UPROPERTY(Transient)
+	int32 CurrentAttackSection = 0;
+
 	UPROPERTY(Transient)
 	FVector2D InputVector;	
 

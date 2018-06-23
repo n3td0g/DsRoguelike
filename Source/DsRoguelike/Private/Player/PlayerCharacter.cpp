@@ -58,7 +58,22 @@ APlayerCharacter::APlayerCharacter()
 	TargetDetector->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 }
 
-void APlayerCharacter::StopCurrentAction()
+void APlayerCharacter::CurrentActionEnded()
+{
+	FName NewSection;
+	FName NextSection;
+
+	if (MontageToPlay && ContinueCurrentAction(NewSection, NextSection)) {
+		if (auto AnimInstance = GetMesh()->GetAnimInstance()) {
+			AnimInstance->Montage_SetNextSection(NewSection, NextSection, MontageToPlay);
+		}
+	}
+	else {
+		StopCurrentAction();
+	}
+}
+
+void APlayerCharacter::StopCurrentAction(float BlendOutTime)
 {
 	switch (CurrentAction.ActionType)
 	{
@@ -69,6 +84,11 @@ void APlayerCharacter::StopCurrentAction()
 	}
 
 	TargetMovementScale = DefaultMovementScale;
+	if (MontageToPlay) {
+		if (auto AnimInstance = GetMesh()->GetAnimInstance()) {
+			AnimInstance->Montage_Stop(BlendOutTime, MontageToPlay);
+		}
+	}
 	MontageToPlay = nullptr;
 	CurrentAction.ActionType = EActionType::AT_Idle;
 }
@@ -208,6 +228,36 @@ void APlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locat
 	StopJumping();
 }
 
+bool APlayerCharacter::ContinueCurrentAction(FName& NewSection, FName& NextSection)
+{
+	if (ActionsMemory.Num() == 0) {
+		return false;
+	}
+
+	bool Result = false;
+
+	EActionType NextAction = ActionsMemory[0].ActionType;
+
+	switch (CurrentAction.ActionType) {
+	case EActionType::AT_Attack: {
+		switch (NextAction)
+		{
+		case EActionType::AT_Attack:
+			CurrentAttackSection = (CurrentAttackSection + 1) % AttackSectionNum;
+			NewSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection);
+			NextSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection + 1);
+			Result = true;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
+	}
+
+	return Result;
+}
+
 void APlayerCharacter::Run()
 {
 	if (GetCharacterMovement()->IsFalling()) {
@@ -289,8 +339,10 @@ void APlayerCharacter::Interact()
 
 void APlayerCharacter::Backstab()
 {
-	StopCurrentAction();
 	ExecuteAction(EActionType::AT_Backstab);
+	if (CurrentAction.ActionType != EActionType::AT_Backstab) {
+		StopCurrentAction(0.0f);
+	}
 }
 
 APlayerCharacter* APlayerCharacter::TryToBackstab()
@@ -333,7 +385,8 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 	switch (ActionType)
 	{
 	case EActionType::AT_Attack:		
-		TryToSetMontage(AttackAnimMontage);
+		CurrentAttackSection = 0;
+		TryToSetMontage(AttackAnimMontage);		
 		break;
 	case EActionType::AT_AttackOnRun:
 		TryToSetMontage(AttackOnRunAnimMontage);
@@ -380,6 +433,9 @@ bool APlayerCharacter::TryToSetMontage(UAnimMontage* NewMontage)
 
 	SetMovementScale(0.0f);
 	MontageToPlay = NewMontage;
+	if (auto AnimInstance = GetMesh()->GetAnimInstance()) {
+		AnimInstance->Montage_Play(MontageToPlay);
+	}
 	return true;
 }
 
