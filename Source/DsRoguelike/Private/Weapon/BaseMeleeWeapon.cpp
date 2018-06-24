@@ -2,6 +2,8 @@
 
 #include "BaseMeleeWeapon.h"
 #include "TraceComponent.h"
+#include "MeleeDamageEvent.h"
+#include "MeleeDamageType.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
@@ -52,9 +54,16 @@ void ABaseMeleeWeapon::Attack()
 		TArray<FHitResult> HitResults;
 		UKismetSystemLibrary::LineTraceMulti(GetWorld(), StartLocation, EndLocation, TraceType, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResults, true);
 		
-		for (const auto& Hit : HitResults) {
-			if (!Hit.bBlockingHit) {
-				ActorsToIgnore.Add(Hit.GetActor());
+		for (const auto& HitResult : HitResults) {
+			if (!HitResult.bBlockingHit) {
+				auto ActorToHit = HitResult.GetActor();
+				if (ActorToHit) {
+					FVector HitDirection = EndLocation - StartLocation;
+					HitDirection.Normalize();
+					ActorToHit->TakeDamage(HealthDamage, FMeleeDamageEvent(HealthDamage, StaminaDamage, PoiseDamage, HitResult, HitDirection, UMeleeDamageType::StaticClass()), nullptr, this);
+					ActorsToIgnore.Add(ActorToHit);
+				}
+				
 			}
 		}
 

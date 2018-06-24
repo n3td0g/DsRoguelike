@@ -8,6 +8,9 @@
 #include "PlayerCharacter.generated.h"
 
 class UAnimMontage;
+class ABaseMeleeWeapon;
+class UStatsComponent;
+class ULookTargetComponent;
 
 UCLASS()
 class DSROGUELIKE_API APlayerCharacter : public ACharacter
@@ -32,13 +35,35 @@ public:
 
 	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 	virtual void BeginPlay() override;
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintCallable)
 	bool IsBackstabAvailable(const FVector& Location, const FVector& Direction);
 
 public:
 	UPROPERTY(BlueprintReadWrite)
-	class ULookTargetComponent* Target;
+	ULookTargetComponent* Target;
+
+	UPROPERTY(BlueprintReadWrite)
+	ABaseMeleeWeapon *Weapon;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Stats)
+	float StaminaToAttack = 23.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Stats)
+	float StaminaToRoll = 19.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Stats)
+	float StaminaToRun = 15.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Stats)
+	float StaminaToJump = 5.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
+	TSubclassOf<ABaseMeleeWeapon> WeaponClass;	
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
+	FName WeaponSocket = TEXT("RightWeapon");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Target)
 	float LookToTargetPitchOffset = 15.0f;
@@ -127,6 +152,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TEnumAsByte<ETraceTypeQuery> BackstabTraceType;
 protected:
+	//Weapon
+	UFUNCTION(BlueprintCallable)
+	void StartAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void StopAttack();
+
+	void CreateWeapon();
+	//Input
 	void ApplyMovementInput();
 
 	void MoveForward(float Value);
@@ -160,6 +194,7 @@ protected:
 	void Backstab();
 	APlayerCharacter* TryToBackstab();
 
+	//Actions
 	void SetCurrentAction(EActionType ActionType);
 	bool TryToSetMontage(UAnimMontage* NewMontage);
 
@@ -167,6 +202,10 @@ protected:
 	void RotateCharaterToMovement();
 	void LookToTarget();
 	void ToggleTarget();
+
+	bool CheckBlock(const FHitResult& Hit, const FVector& HitDirection);
+	bool TryUseStamina(float StaminaNeeded);
+	bool CanAttack();
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -191,6 +230,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stats, meta = (AllowPrivateAccess = "true"))
+	UStatsComponent* StatsComponent;
 
 	UPROPERTY(BlueprintReadOnly)
 	FPlayerAction CurrentAction;

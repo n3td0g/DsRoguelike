@@ -6,10 +6,13 @@
 #include "Components/InputComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "StatsComponent.h"
+#include "MeleeDamageEvent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "DrawDebugHelpers.h"
 #include "Animation/AnimMontage.h"
+#include "BaseMeleeWeapon.h"
 #include "GameFramework/SpringArmComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -46,6 +49,8 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	StatsComponent = CreateDefaultSubobject<UStatsComponent>(TEXT("StatsComponent"));
+
 												   // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 												   // are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
@@ -79,6 +84,10 @@ void APlayerCharacter::StopCurrentAction(float BlendOutTime)
 	{
 	case EActionType::AT_Roll:
 		SetMovementScale(DefaultMovementScale);
+	case EActionType::AT_Attack:
+	case EActionType::AT_AttackOnRun:
+		StopAttack();
+		break;
 	default:
 		break;
 	}
@@ -132,6 +141,12 @@ void APlayerCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FAct
 		}
 	}
 
+	if (CurrentAction.ActionType == EActionType::AT_Run) {
+		if (!TryUseStamina(StaminaToRun * DeltaTime)) {
+			StopCurrentAction();
+		}
+	}
+
 	MovementScale = FMath::FInterpTo(MovementScale, TargetMovementScale, DeltaTime, MovementScaleInterpSpeed);
 	ApplyMovementInput();
 	LookToTarget();
@@ -142,6 +157,30 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	SetMovementScale(DefaultMovementScale);
+	CreateWeapon();
+}
+
+float APlayerCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	if (ActualDamage <= 0.0f) {
+		return ActualDamage;
+	}
+
+	if (DamageEvent.IsOfType(FMeleeDamageEvent::ClassID))
+	{
+		// point damage event, pass off to helper function
+		FMeleeDamageEvent* const MeleeDamageEvent = (FMeleeDamageEvent*)&DamageEvent;
+		if (CheckBlock(MeleeDamageEvent->HitInfo, MeleeDamageEvent->ShotDirection)) {
+			StatsComponent->ApplyDamage(EStatsParameterType::SP_Stamina, MeleeDamageEvent->StaminaDamage);
+		}
+		else {
+			StatsComponent->ApplyDamage(EStatsParameterType::SP_Health, MeleeDamageEvent->Damage);
+			StatsComponent->ApplyDamage(EStatsParameterType::SP_Poise, MeleeDamageEvent->PoiseDamage);
+		}
+	}
+
+	return ActualDamage;
 }
 
 bool APlayerCharacter::IsBackstabAvailable(const FVector& Location, const FVector& Direction)
@@ -243,10 +282,12 @@ bool APlayerCharacter::ContinueCurrentAction(FName& NewSection, FName& NextSecti
 		switch (NextAction)
 		{
 		case EActionType::AT_Attack:
-			CurrentAttackSection = (CurrentAttackSection + 1) % AttackSectionNum;
-			NewSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection);
-			NextSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection + 1);
-			Result = true;
+			if (CanAttack()) {
+				CurrentAttackSection = (CurrentAttackSection + 1) % AttackSectionNum;
+				NewSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection);
+				NextSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection + 1);
+				Result = true;
+			}			
 			break;
 		default:
 			break;
@@ -299,6 +340,11 @@ void APlayerCharacter::StopRunning()
 
 void APlayerCharacter::Attack()
 {
+	if (GetCharacterMovement()->IsFalling()) {
+		//Falling attack
+		return;
+	}
+
 	if (auto Enemy = TryToBackstab()) {
 		Enemy->Backstab();
 		ExecuteAction(EActionType::AT_BackstabAttack);
@@ -380,18 +426,26 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 	UE_LOG(LogTemp, Log, TEXT("New ActionType: %s"), *ParseLine);
 
 	StopCurrentAction();
-	UPawnMovementComponent* MovementComponent = GetMovementComponent();
-	CurrentAction.ActionType = ActionType;
+	
 	switch (ActionType)
 	{
-	case EActionType::AT_Attack:		
+	case EActionType::AT_Attack:
+		if (!CanAttack()) {
+			return;
+		}
 		CurrentAttackSection = 0;
 		TryToSetMontage(AttackAnimMontage);		
 		break;
 	case EActionType::AT_AttackOnRun:
+		if (!CanAttack()) {
+			return;
+		}
 		TryToSetMontage(AttackOnRunAnimMontage);
 		break;
 	case EActionType::AT_Roll:
+		if (!TryUseStamina(StaminaToRoll)) {
+			return;
+		}
 		RotateCharaterToMovement();
 		TryToSetMontage(RollAnimMontage);
 		break;
@@ -399,9 +453,15 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 		TargetMovementScale = BlockMovementScale;
 		break;
 	case EActionType::AT_Run:
+		if (!TryUseStamina(StaminaToRun)) {
+			return;
+		}
 		TargetMovementScale = RunMovementScale;
 		break;
 	case EActionType::AT_Jump:
+		if (!TryUseStamina(StaminaToJump)) {
+			return;
+		}
 		TryToSetMontage(JumpAnimMontage);		
 		break;
 	case EActionType::AT_Bounce:
@@ -422,6 +482,8 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 	default:
 		break;
 	}
+
+	CurrentAction.ActionType = ActionType;
 }
 
 bool APlayerCharacter::TryToSetMontage(UAnimMontage* NewMontage)
@@ -519,6 +581,37 @@ void APlayerCharacter::ToggleTarget()
 	}
 }
 
+bool APlayerCharacter::CheckBlock(const FHitResult& Hit, const FVector& HitDirection)
+{
+	if (CurrentAction.ActionType == EActionType::AT_Block) {
+
+	}
+
+	return false;
+}
+
+bool APlayerCharacter::TryUseStamina(float StaminaNeeded)
+{
+	FStatsParameter Stamina;
+	StatsComponent->GetStatsParameter(EStatsParameterType::SP_Stamina, Stamina);
+	if (Stamina.Value >= 0.0f) {
+		StatsComponent->ApplyDamage(EStatsParameterType::SP_Stamina, StaminaNeeded);
+		return true;
+	}
+
+	return false;
+}
+
+bool APlayerCharacter::CanAttack()
+{
+	UPawnMovementComponent* MovementComponent = GetMovementComponent();
+	if (MovementComponent->IsFalling()) {
+		return false;
+	}
+
+	return TryUseStamina(StaminaToAttack);
+}
+
 void APlayerCharacter::TurnAtRate(float Rate)
 {
 	if (Target) {
@@ -535,6 +628,37 @@ void APlayerCharacter::LookUpAtRate(float Rate)
 	}
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::StartAttack()
+{
+	if (Weapon) {
+		Weapon->StartAttack();
+	}
+}
+
+void APlayerCharacter::StopAttack()
+{
+	if (Weapon) {
+		Weapon->StopAttack();
+	}
+}
+
+void APlayerCharacter::CreateWeapon()
+{
+	if (Weapon) {
+		return;
+	}
+
+	if (!WeaponClass) {
+		return;
+	}
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Weapon = GetWorld()->SpawnActor<ABaseMeleeWeapon>(WeaponClass, Params);
+	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 }
 
 void APlayerCharacter::ApplyMovementInput()

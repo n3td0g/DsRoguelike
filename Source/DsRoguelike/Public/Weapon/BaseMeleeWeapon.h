@@ -29,11 +29,20 @@ protected:
 	void Attack();
 
 protected:
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Trace)
 	TEnumAsByte<ETraceTypeQuery> TraceType;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Trace)
 	float AttackUpdateRate = 0.05f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Damage)
+	float HealthDamage = 25.0f;
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Damage)
+	float StaminaDamage = 30.0f;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Damage)
+	float PoiseDamage = 25.0f;
 
 private:
 	UPROPERTY(Transient)
