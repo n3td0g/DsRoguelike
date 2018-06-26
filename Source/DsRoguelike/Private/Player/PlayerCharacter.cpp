@@ -171,13 +171,21 @@ float APlayerCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 	{
 		// point damage event, pass off to helper function
 		FMeleeDamageEvent* const MeleeDamageEvent = (FMeleeDamageEvent*)&DamageEvent;
-		if (CheckBlock(MeleeDamageEvent->HitInfo, MeleeDamageEvent->ShotDirection)) {
-			StatsComponent->ApplyDamage(EStatsParameterType::SP_Stamina, MeleeDamageEvent->StaminaDamage);
+		if (CurrentAction.ActionType == EActionType::AT_Block) {
+			if (IsHitBlocked(MeleeDamageEvent->ShotDirection)) {
+				StatsComponent->ApplyDamage(EStatsParameterType::SP_Stamina, MeleeDamageEvent->StaminaDamage);
+				FStatsParameter Stamina;
+				StatsComponent->GetStatsParameter(EStatsParameterType::SP_Stamina, Stamina);
+				if (Stamina.Value < 0.0f) {
+					StunLock();
+				}
+				return 0.0f;
+			}
 		}
-		else {
-			StatsComponent->ApplyDamage(EStatsParameterType::SP_Health, MeleeDamageEvent->Damage);
-			StatsComponent->ApplyDamage(EStatsParameterType::SP_Poise, MeleeDamageEvent->PoiseDamage);
-		}
+		
+		ActualDamage = MeleeDamageEvent->Damage;
+		StatsComponent->ApplyDamage(EStatsParameterType::SP_Health, MeleeDamageEvent->Damage);
+		StatsComponent->ApplyDamage(EStatsParameterType::SP_Poise, MeleeDamageEvent->PoiseDamage);
 	}
 
 	return ActualDamage;
@@ -203,6 +211,11 @@ bool APlayerCharacter::IsBackstabAvailable(const FVector& Location, const FVecto
 		break;
 	}
 
+	return IsHitFromBack(Location, Direction);
+}
+
+bool APlayerCharacter::IsHitFromBack(const FVector& Location, const FVector& Direction)
+{
 	const FVector& Forward = GetActorForwardVector();
 	if (FVector::DotProduct(Forward, Direction) < BackstabMinDot) {
 		UE_LOG(LogTemp, Log, TEXT("Wrong attack direction"));
@@ -218,6 +231,16 @@ bool APlayerCharacter::IsBackstabAvailable(const FVector& Location, const FVecto
 		return false;
 	}
 
+	return true;
+}
+
+bool APlayerCharacter::IsHitBlocked(const FVector& Direction)
+{
+	const FVector& Forward = GetActorForwardVector();
+	if (FVector::DotProduct(Forward, Direction) > BlockMinDot) {
+		UE_LOG(LogTemp, Log, TEXT("Wrong attack direction"));
+		return false;
+	}
 	return true;
 }
 
@@ -269,28 +292,27 @@ void APlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locat
 
 bool APlayerCharacter::ContinueCurrentAction(FName& NewSection, FName& NextSection)
 {
-	if (ActionsMemory.Num() == 0) {
-		return false;
-	}
-
 	bool Result = false;
-
-	EActionType NextAction = ActionsMemory[0].ActionType;
+	EActionType NextAction = ActionsMemory.Num() > 0 ? ActionsMemory[0].ActionType : EActionType::AT_Block;
 
 	switch (CurrentAction.ActionType) {
 	case EActionType::AT_Attack: {
-		switch (NextAction)
+		if (NextAction == EActionType::AT_Attack)
 		{
-		case EActionType::AT_Attack:
 			if (CanAttack()) {
 				CurrentAttackSection = (CurrentAttackSection + 1) % AttackSectionNum;
 				NewSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection);
 				NextSection = *FString::Printf(TEXT("AttackStart%d"), CurrentAttackSection + 1);
 				Result = true;
-			}			
-			break;
-		default:
-			break;
+			}
+		}
+		break;
+	}
+	case EActionType::AT_Block: {
+		if (NextAction == EActionType::AT_Block) {
+			NewSection = TEXT("Block");
+			NextSection = TEXT("BlockEnd");
+			Result = true;
 		}
 		break;
 	}
@@ -345,8 +367,10 @@ void APlayerCharacter::Attack()
 		return;
 	}
 
-	if (auto Enemy = TryToBackstab()) {
+	FHitResult HitResult;
+	if (auto Enemy = TryToBackstab(HitResult)) {
 		Enemy->Backstab();
+		Enemy->TakeDamage(KickDamage, FMeleeDamageEvent(CriticalDamage, 0.0f, 0.0f, HitResult, GetActorForwardVector(), UDamageType::StaticClass()), nullptr, this);
 		ExecuteAction(EActionType::AT_BackstabAttack);
 	}
 	else {
@@ -358,7 +382,10 @@ void APlayerCharacter::Attack()
 			ExecuteAction(EActionType::AT_AttackOnRun);
 		}
 		else {
-			ExecuteAction(EActionType::AT_Attack);
+			if(!TryToKick()) {
+				ExecuteAction(EActionType::AT_Attack);
+			}
+			
 		}		
 	}	
 }
@@ -370,7 +397,9 @@ void APlayerCharacter::Block()
 
 void APlayerCharacter::StopBlocking()
 {
-	StopCurrentAction();
+	if (CurrentAction.ActionType == EActionType::AT_Block) {
+		StopCurrentAction();
+	}
 }
 
 void APlayerCharacter::Use()
@@ -391,13 +420,13 @@ void APlayerCharacter::Backstab()
 	}
 }
 
-APlayerCharacter* APlayerCharacter::TryToBackstab()
+APlayerCharacter* APlayerCharacter::TryToBackstab(FHitResult& HitResult)
 {
 	if (CurrentAction.ActionType != EActionType::AT_Idle) {
 		return nullptr;
 	}
 
-	if (InputVector.SizeSquared() > 0.1f) {
+	if (InputVector.SizeSquared() > 0.0001f) {
 		return nullptr;
 	}
 
@@ -406,7 +435,6 @@ APlayerCharacter* APlayerCharacter::TryToBackstab()
 	}
 
 	const FVector EndLocation = GetActorLocation() + GetActorForwardVector() * BackstabDistance;
-	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Push(this);
 	if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), EndLocation, BackstabTraceType, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true, FLinearColor::Blue)) {
@@ -418,6 +446,38 @@ APlayerCharacter* APlayerCharacter::TryToBackstab()
 		}
 	}
 	return nullptr;
+}
+
+void APlayerCharacter::StunLock()
+{
+	StopCurrentAction();
+	ExecuteAction(EActionType::AT_Stun);
+}
+
+bool APlayerCharacter::TryToKick()
+{
+	if (InputVector.X > 0.9f && InputVector.Y == 0.0f) {
+		if (GetWorld()->TimeSeconds - LastIdleTime < TimeToKick) {
+			ExecuteAction(EActionType::AT_Kick);
+			return true;
+		}
+	}
+	return false;
+}
+
+void APlayerCharacter::Kick()
+{
+	const FVector& HitDirection = GetActorForwardVector();
+	const FVector EndLocation = GetActorLocation() + HitDirection * KickDistance;
+	FHitResult HitResult;
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Push(this);
+	if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), EndLocation, BackstabTraceType, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true, FLinearColor::Blue)) {
+		auto Enemy = HitResult.GetActor();
+		if (Enemy) {
+			Enemy->TakeDamage(KickDamage, FMeleeDamageEvent(KickDamage, 101.0f, 0.0f, HitResult, HitDirection, UDamageType::StaticClass()), nullptr, this);
+		}
+	}
 }
 
 void APlayerCharacter::SetCurrentAction(EActionType ActionType)
@@ -442,43 +502,51 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 		}
 		TryToSetMontage(AttackOnRunAnimMontage);
 		break;
-	case EActionType::AT_Roll:
-		if (!TryUseStamina(StaminaToRoll)) {
-			return;
-		}
-		RotateCharaterToMovement();
-		TryToSetMontage(RollAnimMontage);
-		break;
-	case EActionType::AT_Block:
-		TargetMovementScale = BlockMovementScale;
-		break;
-	case EActionType::AT_Run:
-		if (!TryUseStamina(StaminaToRun)) {
-			return;
-		}
-		TargetMovementScale = RunMovementScale;
-		break;
-	case EActionType::AT_Jump:
-		if (!TryUseStamina(StaminaToJump)) {
-			return;
-		}
-		TryToSetMontage(JumpAnimMontage);		
-		break;
-	case EActionType::AT_Bounce:
-		TryToSetMontage(BounceAnimMontage);
-		break;
-	case EActionType::AT_Use:
-		TryToSetMontage(UseAnimMontage);
-		break;
-	case EActionType::AT_Interact:
-		TryToSetMontage(InteractAnimMontage);
-		break;
 	case EActionType::AT_Backstab:
 		TryToSetMontage(BackstabAnimMontage);
 		break;
 	case EActionType::AT_BackstabAttack:
 		TryToSetMontage(BackstabAttackAnimMontage);
 		break;
+	case EActionType::AT_Block:
+		TargetMovementScale = BlockMovementScale;
+		SetMovementScale(BlockMovementScale);
+		break;
+	case EActionType::AT_Bounce:
+		TryToSetMontage(BounceAnimMontage);
+		break;
+	case EActionType::AT_Interact:
+		TryToSetMontage(InteractAnimMontage);
+		break;
+	case EActionType::AT_Jump:
+		if (!TryUseStamina(StaminaToJump)) {
+			return;
+		}
+		TryToSetMontage(JumpAnimMontage);
+		break;
+	case EActionType::AT_Kick:
+		TryToSetMontage(KickAnimMontage);
+		Kick();
+		break;
+	case EActionType::AT_Roll:
+		if (!TryUseStamina(StaminaToRoll)) {
+			return;
+		}
+		RotateCharaterToMovement();
+		TryToSetMontage(RollAnimMontage);
+		break;	
+	case EActionType::AT_Run:
+		if (!TryUseStamina(StaminaToRun)) {
+			return;
+		}
+		TargetMovementScale = RunMovementScale;
+		break;	
+	case EActionType::AT_Stun:
+		TryToSetMontage(StunAnimMontage);
+		break;
+	case EActionType::AT_Use:
+		TryToSetMontage(UseAnimMontage);
+		break;	
 	default:
 		break;
 	}
@@ -546,7 +614,7 @@ void APlayerCharacter::LookToTarget()
 		const FRotator& TargetControllerRotation = FMath::RInterpTo(CurrentRotation, NewControlRotation, GetWorld()->DeltaTimeSeconds, RotateCameraToTargetSpeed);
 		Controller->SetControlRotation(TargetControllerRotation);
 
-		if (CurrentAction.ActionType == EActionType::AT_Idle) {
+		if (CurrentAction.ActionType == EActionType::AT_Idle || CurrentAction.ActionType == EActionType::AT_Block) {
 			GetCharacterMovement()->bOrientRotationToMovement = false;
 			const FRotator& Rotation = Controller->GetControlRotation();
 			const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
@@ -579,15 +647,6 @@ void APlayerCharacter::ToggleTarget()
 			}			
 		}
 	}
-}
-
-bool APlayerCharacter::CheckBlock(const FHitResult& Hit, const FVector& HitDirection)
-{
-	if (CurrentAction.ActionType == EActionType::AT_Block) {
-
-	}
-
-	return false;
 }
 
 bool APlayerCharacter::TryUseStamina(float StaminaNeeded)
@@ -663,20 +722,25 @@ void APlayerCharacter::CreateWeapon()
 
 void APlayerCharacter::ApplyMovementInput()
 {
-	if ((Controller != NULL) && (InputVector.SizeSquared() != 0.0f) && MovementScale > 0.0f)
+	if ((Controller != NULL) && MovementScale > 0.0f)
 	{
-		// find out which way is right
-		const FRotator& Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
+		if (InputVector.SizeSquared() > 0.0001f) {
+			// find out which way is right
+			const FRotator& Rotation = Controller->GetControlRotation();
+			const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 
-		// get right vector 
-		const FVector& DirectionY = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		const FVector& DirectionX = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			// get right vector 
+			const FVector& DirectionY = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			const FVector& DirectionX = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		FVector Direction = DirectionX * InputVector.X + DirectionY * InputVector.Y;
-		Direction.Normalize();
-		// add movement in that direction
-		AddMovementInput(Direction, MovementScale);
+			FVector Direction = DirectionX * InputVector.X + DirectionY * InputVector.Y;
+			Direction.Normalize();
+			// add movement in that direction
+			AddMovementInput(Direction, MovementScale);
+		}
+		else {
+			LastIdleTime = GetWorld()->TimeSeconds;
+		}
 	}
 }
 

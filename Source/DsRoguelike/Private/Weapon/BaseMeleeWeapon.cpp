@@ -55,16 +55,17 @@ void ABaseMeleeWeapon::Attack()
 		UKismetSystemLibrary::LineTraceMulti(GetWorld(), StartLocation, EndLocation, TraceType, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResults, true);
 		
 		for (const auto& HitResult : HitResults) {
-			if (!HitResult.bBlockingHit) {
-				auto ActorToHit = HitResult.GetActor();
-				if (ActorToHit) {
-					FVector HitDirection = EndLocation - StartLocation;
-					HitDirection.Normalize();
-					ActorToHit->TakeDamage(HealthDamage, FMeleeDamageEvent(HealthDamage, StaminaDamage, PoiseDamage, HitResult, HitDirection, UMeleeDamageType::StaticClass()), nullptr, this);
-					ActorsToIgnore.Add(ActorToHit);
-				}
-				
+			auto ActorToHit = HitResult.GetActor();
+			if (ActorsToIgnore.Contains(ActorToHit)) {
+				continue;
 			}
+			if (ActorToHit) {
+				FVector HitSource = GetOwner() ? GetOwner()->GetActorLocation() : GetActorLocation();
+				FVector HitDirection = ActorToHit->GetActorLocation() - HitSource;
+				HitDirection.Normalize();
+				ActorToHit->TakeDamage(HealthDamage, FMeleeDamageEvent(HealthDamage, StaminaDamage, PoiseDamage, HitResult, HitDirection, UMeleeDamageType::StaticClass()), nullptr, this);
+			}
+			ActorsToIgnore.Add(ActorToHit);
 		}
 
 		PrevLocations[I] = EndLocation;

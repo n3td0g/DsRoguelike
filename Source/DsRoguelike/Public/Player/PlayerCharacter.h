@@ -40,6 +40,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool IsBackstabAvailable(const FVector& Location, const FVector& Direction);
 
+	UFUNCTION(BlueprintCallable)
+	bool IsHitFromBack(const FVector& Location, const FVector& Direction);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsHitBlocked(const FVector& Direction);
 public:
 	UPROPERTY(BlueprintReadWrite)
 	ULookTargetComponent* Target;
@@ -81,10 +86,16 @@ public:
 	UAnimMontage* MontageToPlay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* KickAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* RollAnimMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	int32 AttackSectionNum = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* StunAnimMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* JumpAnimMontage;
@@ -149,6 +160,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
 	float BackstabDistance = 100.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Crit)
+	float CriticalDamage = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Block)
+	float BlockMinDot = -0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Kick)
+	float TimeToKick = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Kick)
+	float KickDistance = 70.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Kick)
+	float KickDamage = 10.0f;
+	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TEnumAsByte<ETraceTypeQuery> BackstabTraceType;
 protected:
@@ -192,7 +218,13 @@ protected:
 	void Interact();
 
 	void Backstab();
-	APlayerCharacter* TryToBackstab();
+	APlayerCharacter* TryToBackstab(FHitResult& HitResult);
+
+	//Stun lock
+	void StunLock();
+
+	bool TryToKick();
+	void Kick();
 
 	//Actions
 	void SetCurrentAction(EActionType ActionType);
@@ -203,7 +235,6 @@ protected:
 	void LookToTarget();
 	void ToggleTarget();
 
-	bool CheckBlock(const FHitResult& Hit, const FVector& HitDirection);
 	bool TryUseStamina(float StaminaNeeded);
 	bool CanAttack();
 
@@ -240,6 +271,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	float MovementScale = 1.0f;
 private:
+	UPROPERTY(Transient)
+	float LastIdleTime = 0.0f;
+
 	UPROPERTY(Transient)
 	int32 CurrentAttackSection = 0;
 
