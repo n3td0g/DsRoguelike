@@ -44,6 +44,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Damage)
 	float PoiseDamage = 25.0f;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Debug)
+	bool bDebugDraw = false;
+
 private:
 	UPROPERTY(Transient)
 	FTimerHandle AttackTimerHandle;

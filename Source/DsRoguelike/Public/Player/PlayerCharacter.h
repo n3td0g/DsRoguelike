@@ -41,7 +41,10 @@ public:
 	bool IsBackstabAvailable(const FVector& Location, const FVector& Direction);
 
 	UFUNCTION(BlueprintCallable)
-	bool IsHitFromBack(const FVector& Location, const FVector& Direction);
+	bool IsFrontstabAvailable(const FVector& Location, const FVector& Direction);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsHitFromDirection(const FVector& Location, const FVector& HitDirection, const FVector& Direction);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsHitBlocked(const FVector& Direction);
@@ -121,6 +124,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* BackstabAttackAnimMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* FrontstabAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* FrontstabAttackAnimMontage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseTurnRate;
 
@@ -151,16 +160,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	float BlockMovementScale = 0.5f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
-	float BackstabMinDot = 0.7f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Critical Attack")
+	float CriticalMinDot = 0.7f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Critical Attack")
 	float BackstabMaxVelocity = 10.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Backstab)
-	float BackstabDistance = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Critical Attack")
+	float CriticalDistance = 100.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Crit)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Critical Attack")
 	float CriticalDamage = 50.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Block)
@@ -217,8 +226,8 @@ protected:
 	void Use();
 	void Interact();
 
-	void Backstab();
-	APlayerCharacter* TryToBackstab(FHitResult& HitResult);
+	void CriticalAttack(bool IsBackstab);
+	APlayerCharacter* TryToCriticalAttack(FHitResult& HitResult, bool& IsBackstab);
 
 	//Stun lock
 	void StunLock();

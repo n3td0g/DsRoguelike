@@ -210,14 +210,24 @@ bool APlayerCharacter::IsBackstabAvailable(const FVector& Location, const FVecto
 	default:
 		break;
 	}
-
-	return IsHitFromBack(Location, Direction);
+	const FVector& Forward = GetActorForwardVector();
+	return IsHitFromDirection(Location, Direction, Forward);
 }
 
-bool APlayerCharacter::IsHitFromBack(const FVector& Location, const FVector& Direction)
+bool APlayerCharacter::IsFrontstabAvailable(const FVector& Location, const FVector& Direction)
 {
+	if (CurrentAction.ActionType != EActionType::AT_Stun) {
+		UE_LOG(LogTemp, Log, TEXT("Not stun action"));
+		return false;
+	}
+
 	const FVector& Forward = GetActorForwardVector();
-	if (FVector::DotProduct(Forward, Direction) < BackstabMinDot) {
+	return IsHitFromDirection(Location, Direction, -Forward);
+}
+
+bool APlayerCharacter::IsHitFromDirection(const FVector& Location, const FVector& HitDirection, const FVector& Direction)
+{
+	if (FVector::DotProduct(Direction, HitDirection) < CriticalMinDot) {
 		UE_LOG(LogTemp, Log, TEXT("Wrong attack direction"));
 		return false;
 	}
@@ -226,7 +236,7 @@ bool APlayerCharacter::IsHitFromBack(const FVector& Location, const FVector& Dir
 	AttackDirection.Z = 0.0f;
 	AttackDirection.Normalize();
 
-	if (FVector::DotProduct(Forward, AttackDirection) < BackstabMinDot) {
+	if (FVector::DotProduct(Direction, AttackDirection) < CriticalMinDot) {
 		UE_LOG(LogTemp, Log, TEXT("Wrong attack location"));
 		return false;
 	}
@@ -368,10 +378,12 @@ void APlayerCharacter::Attack()
 	}
 
 	FHitResult HitResult;
-	if (auto Enemy = TryToBackstab(HitResult)) {
-		Enemy->Backstab();
+	bool bIsBackStatab;
+	if (auto Enemy = TryToCriticalAttack(HitResult, bIsBackStatab)) {
+		Enemy->CriticalAttack(bIsBackStatab);
 		Enemy->TakeDamage(KickDamage, FMeleeDamageEvent(CriticalDamage, 0.0f, 0.0f, HitResult, GetActorForwardVector(), UDamageType::StaticClass()), nullptr, this);
-		ExecuteAction(EActionType::AT_BackstabAttack);
+		EActionType Action = bIsBackStatab ? EActionType::AT_BackstabAttack : EActionType::AT_FrontstabAttack;
+		ExecuteAction(Action);
 	}
 	else {
 		if (CurrentAction.ActionType == EActionType::AT_Run) {
@@ -412,15 +424,16 @@ void APlayerCharacter::Interact()
 	ExecuteAction(EActionType::AT_Interact);
 }
 
-void APlayerCharacter::Backstab()
+void APlayerCharacter::CriticalAttack(bool IsBackstab)
 {
-	ExecuteAction(EActionType::AT_Backstab);
-	if (CurrentAction.ActionType != EActionType::AT_Backstab) {
+	EActionType ActionType = IsBackstab ? EActionType::AT_Backstab : EActionType::AT_Frontstab;
+	ExecuteAction(ActionType);
+	if (CurrentAction.ActionType != ActionType) {
 		StopCurrentAction(0.0f);
 	}
 }
 
-APlayerCharacter* APlayerCharacter::TryToBackstab(FHitResult& HitResult)
+APlayerCharacter* APlayerCharacter::TryToCriticalAttack(FHitResult& HitResult, bool& IsBackstab)
 {
 	if (CurrentAction.ActionType != EActionType::AT_Idle) {
 		return nullptr;
@@ -434,13 +447,19 @@ APlayerCharacter* APlayerCharacter::TryToBackstab(FHitResult& HitResult)
 		return nullptr;
 	}
 
-	const FVector EndLocation = GetActorLocation() + GetActorForwardVector() * BackstabDistance;
+	const FVector EndLocation = GetActorLocation() + GetActorForwardVector() * CriticalDistance;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Push(this);
 	if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), EndLocation, BackstabTraceType, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true, FLinearColor::Blue)) {
 		auto Enemy = Cast<APlayerCharacter>(HitResult.GetActor());
 		if (Enemy) {
-			if (Enemy->IsBackstabAvailable(HitResult.ImpactPoint, GetActorForwardVector())) {
+			const FVector& Forward = GetActorForwardVector();
+			if (Enemy->IsBackstabAvailable(HitResult.ImpactPoint, Forward)) {
+				IsBackstab = true;
+				return Enemy;
+			}
+			if (Enemy->IsFrontstabAvailable(HitResult.ImpactPoint, Forward)) {
+				IsBackstab = false;
 				return Enemy;
 			}
 		}
@@ -507,6 +526,12 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 		break;
 	case EActionType::AT_BackstabAttack:
 		TryToSetMontage(BackstabAttackAnimMontage);
+		break;
+	case EActionType::AT_Frontstab:
+		TryToSetMontage(FrontstabAnimMontage);
+		break;
+	case EActionType::AT_FrontstabAttack:
+		TryToSetMontage(FrontstabAttackAnimMontage);
 		break;
 	case EActionType::AT_Block:
 		TargetMovementScale = BlockMovementScale;

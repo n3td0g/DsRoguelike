@@ -16,7 +16,9 @@ enum class EActionType : uint8
 	AT_Use					UMETA(DisplayName = "Use"),
 	AT_Interact				UMETA(DisplayName = "Interact"),
 	AT_BackstabAttack		UMETA(DisplayName = "BackstabAttack"),
+	AT_FrontstabAttack		UMETA(DisplayName = "FrontstabAttack"),
 	AT_Backstab				UMETA(DisplayName = "Backstab"),
+	AT_Frontstab			UMETA(DisplayName = "Frontstab"),
 	AT_Stun					UMETA(DisplayName = "Stun"),
 	AT_Kick					UMETA(DisplayName = "Kick"),
 };
