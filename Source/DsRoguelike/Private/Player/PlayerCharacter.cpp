@@ -61,6 +61,10 @@ APlayerCharacter::APlayerCharacter()
 	TargetDetector->SetCollisionResponseToAllChannels(ECR_Ignore);
 	TargetDetector->SetCollisionObjectType(ECC_WorldDynamic);
 	TargetDetector->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
+	EstusFlaskMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EstusFlaskMesh"));
+	EstusFlaskMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EstusFlaskMesh->SetupAttachment(GetMesh(), TEXT("SpineSocket"));
 }
 
 void APlayerCharacter::CurrentActionEnded()
@@ -91,6 +95,8 @@ void APlayerCharacter::StopCurrentAction(float BlendOutTime)
 	default:
 		break;
 	}
+
+	EstusFlaskMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("SpineSocket"));
 
 	TargetMovementScale = DefaultMovementScale;
 	if (MontageToPlay) {
@@ -571,6 +577,7 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 		break;
 	case EActionType::AT_Use:
 		TryToSetMontage(UseAnimMontage);
+		EstusFlaskMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("LeftHandSocket"));
 		break;	
 	default:
 		break;

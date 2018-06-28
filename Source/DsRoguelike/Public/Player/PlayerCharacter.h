@@ -274,6 +274,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stats, meta = (AllowPrivateAccess = "true"))
 	UStatsComponent* StatsComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Stats, meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* EstusFlaskMesh;
+
 	UPROPERTY(BlueprintReadOnly)
 	FPlayerAction CurrentAction;
 
