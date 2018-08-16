@@ -192,6 +192,11 @@ float APlayerCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 		ActualDamage = MeleeDamageEvent->Damage;
 		StatsComponent->ApplyDamage(EStatsParameterType::SP_Health, MeleeDamageEvent->Damage);
 		StatsComponent->ApplyDamage(EStatsParameterType::SP_Poise, MeleeDamageEvent->PoiseDamage);
+		FStatsParameter Poise;
+		StatsComponent->GetStatsParameter(EStatsParameterType::SP_Poise, Poise);
+		if (Poise.Value <= 0.0f) {
+			Stagger();
+		}
 	}
 
 	return ActualDamage;
@@ -505,6 +510,23 @@ void APlayerCharacter::Kick()
 	}
 }
 
+void APlayerCharacter::Stagger()
+{
+	switch (CurrentAction.ActionType)
+	{
+	case EActionType::AT_Frontstab:
+	case EActionType::AT_Backstab:
+	case EActionType::AT_Stun:
+	case EActionType::AT_Stagger:
+		return;
+	default:
+		break;
+	}
+
+	StopCurrentAction();
+	ExecuteAction(EActionType::AT_Stagger);
+}
+
 void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 {
 	FString ParseLine = GetEnumValueAsString<EActionType>("EActionType", ActionType);
@@ -526,6 +548,9 @@ void APlayerCharacter::SetCurrentAction(EActionType ActionType)
 			return;
 		}
 		TryToSetMontage(AttackOnRunAnimMontage);
+		break;
+	case EActionType::AT_Stagger:
+		TryToSetMontage(StaggerAnimMontage);
 		break;
 	case EActionType::AT_Backstab:
 		TryToSetMontage(BackstabAnimMontage);

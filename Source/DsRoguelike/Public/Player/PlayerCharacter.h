@@ -122,6 +122,9 @@ public:
 	UAnimMontage* BackstabAnimMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
+	UAnimMontage* StaggerAnimMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
 	UAnimMontage* BackstabAttackAnimMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation)
@@ -198,7 +201,9 @@ protected:
 	//Input
 	void ApplyMovementInput();
 
+	UFUNCTION(BlueprintCallable)
 	void MoveForward(float Value);
+	UFUNCTION(BlueprintCallable)
 	void MoveRight(float Value);
 
 	void TurnAtRate(float Rate);
@@ -234,6 +239,9 @@ protected:
 
 	bool TryToKick();
 	void Kick();
+
+	UFUNCTION(BlueprintCallable)
+	void Stagger();
 
 	//Actions
 	void SetCurrentAction(EActionType ActionType);

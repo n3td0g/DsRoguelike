@@ -21,4 +21,5 @@ enum class EActionType : uint8
 	AT_Frontstab			UMETA(DisplayName = "Frontstab"),
 	AT_Stun					UMETA(DisplayName = "Stun"),
 	AT_Kick					UMETA(DisplayName = "Kick"),
+	AT_Stagger				UMETA(DisplayName = "Stagger"),
 };

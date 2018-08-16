@@ -45,6 +45,7 @@ void UActorNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	if (PropertyChangedEvent.Property)
 	{
 		if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass)) {
+			
 			SetChildActorClass(ActorClass);
 		}
 	}
@@ -75,7 +76,17 @@ void UActorNode::Serialize(FArchive& Ar)
 	}
 	else if (Ar.HasAllPortFlags(PPF_Duplicate))
 	{
-		if (!GIsEditor && !Ar.IsLoading() && !GIsDuplicatingClassForReinstancing)
+		if (GIsEditor && Ar.IsLoading() && !IsTemplate())
+		{
+			// If we're not a template then we do not want the duplicate so serialize manually and destroy the template that was created for us
+			Ar.Serialize(&ActorTemplate, sizeof(UObject*));
+
+			if (AActor* UnwantedDuplicate = static_cast<AActor*>(FindObjectWithOuter(this, AActor::StaticClass())))
+			{
+				UnwantedDuplicate->MarkPendingKill();
+			}
+		}
+		else if (!GIsEditor && !Ar.IsLoading() && !GIsDuplicatingClassForReinstancing)
 		{
 			// Avoid the archiver in the duplicate writer case because we want to avoid the duplicate being created
 			Ar.Serialize(&ActorTemplate, sizeof(UObject*));
@@ -102,11 +113,18 @@ void UActorNode::Serialize(FArchive& Ar)
 	// Since we sometimes serialize properties in instead of using duplication and we can end up pointing at the wrong template
 	else if (!Ar.IsPersistent() && ActorTemplate)
 	{
-		// If we are a template and are not pointing at a component we own we'll need to fix that
-		if (ActorTemplate->GetOuter() != this)
+		if (IsTemplate())
 		{
-			const FString TemplateName = FString::Printf(TEXT("%s_%s_CAT"), *GetName(), *ActorClass->GetName());
-			ActorTemplate = CastChecked<AActor>(StaticDuplicateObject(ActorTemplate, this, *TemplateName));
+			// If we are a template and are not pointing at a component we own we'll need to fix that
+			if (ActorTemplate->GetOuter() != this)
+			{
+				const FString TemplateName = FString::Printf(TEXT("%s_%s_CAT"), *GetName(), *ActorClass->GetName());
+				ActorTemplate = CastChecked<AActor>(StaticDuplicateObject(ActorTemplate, this, *TemplateName));
+			}
+		}
+		else {
+			//ActorTemplate = CastChecked<UActorNode>(GetArchetype())->ActorTemplate;
+			SetChildActorClass(ActorClass);
 		}
 	}
 #endif
@@ -141,9 +159,9 @@ void UActorNode::SetChildActorClass(TSubclassOf<AActor> InClass)
 			ActorTemplate->Modify();
 
 			// Now set the actual name and outer to the BPGC.
-			const FString TemplateName = FString::Printf(TEXT("%s_%s_CAT"), *GetName(), *ActorClass->GetName());
+			//const FString TemplateName = FString::Printf(TEXT("%s_%s_CAT"), *GetName(), *ActorClass->GetName());
 
-			ActorTemplate->Rename(*TemplateName, this, REN_DoNotDirty | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
+			//ActorTemplate->Rename(*TemplateName, this, REN_DoNotDirty | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
 		}
 	}
 	else if (ActorTemplate)
