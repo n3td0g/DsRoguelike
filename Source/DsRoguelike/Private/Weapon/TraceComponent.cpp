@@ -1,4 +1,4 @@
-#include "TraceComponent.h"
+#include "Weapon/TraceComponent.h"
 
 UTraceComponent::UTraceComponent()
 {

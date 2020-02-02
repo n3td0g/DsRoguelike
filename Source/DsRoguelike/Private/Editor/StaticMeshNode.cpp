@@ -1,7 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "StaticMeshNode.h"
+#include "Editor/StaticMeshNode.h"
 #include "Engine/StaticMeshActor.h"
+#include "Components/StaticMeshComponent.h"
 
 void UStaticMeshNode::Process(const FTransform& MarkerTransform, UWorld* World)
 {
@@ -13,7 +14,7 @@ void UStaticMeshNode::Process(const FTransform& MarkerTransform, UWorld* World)
 
 	auto StaticMeshActor = World->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), WorldTransform, SpawnParameters);
 	if (StaticMeshActor) {
-		auto StaticMeshComponent = StaticMeshActor->GetStaticMeshComponent();
+		UStaticMeshComponent* StaticMeshComponent = StaticMeshActor->GetStaticMeshComponent();
 		StaticMeshComponent->SetStaticMesh(StaticMesh);
 	}
 }

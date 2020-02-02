@@ -1,9 +1,8 @@
 // Copyright 2016 Dmitriy Pavlov
-
-#include "ConnectionDrawingPolicy_DungeonGraph.h"
+#include "DungeonEditor/ConnectionDrawingPolicy_DungeonGraph.h"
 #include "GraphEditor.h"
-#include "DrawElements.h"
 #include "SGraphNode.h"
+#include "ConnectionDrawingPolicy.h"
 
 
 FConnectionDrawingPolicy_DungeonGraph::FConnectionDrawingPolicy_DungeonGraph(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
@@ -126,7 +125,6 @@ void FConnectionDrawingPolicy_DungeonGraph::DrawConnection(int32 LayerId, const 
 		LayerId,
 		P0, P0Tangent,
 		P1, P1Tangent,
-		ClippingRect,
 		Params.WireThickness,
 		ESlateDrawEffect::None,
 		Params.WireColor
@@ -160,7 +158,6 @@ void FConnectionDrawingPolicy_DungeonGraph::DrawConnection(int32 LayerId, const 
 					LayerId,
 					FPaintGeometry(BubblePos, BubbleSize, ZoomFactor),
 					BubbleImage,
-					ClippingRect,
 					ESlateDrawEffect::None,
 					Params.WireColor
 					);

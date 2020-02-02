@@ -1,15 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "VisualGraphNode.h"
-#include "VisualNode.h"
-#include "EdGraph_DungeonTemplate.h"
-#include "SlateIconFinder.h"
+#include "DungeonEditor/VisualNode/VisualGraphNode.h"
 #include "ClassIconFinder.h"
-#include "DungeonTemplate.h"
+#include "EdGraph/EdGraphNode.h"
+#include "Editor/VisualNode.h"
 
 void UVisualGraphNode::AllocateDefaultPins()
 {
-	CreatePin(EGPD_Input, "MultipleNodes", FString(), nullptr, TEXT("In"));
+	CreatePin(EGPD_Input, TEXT("MultipleNodes"), nullptr, TEXT("In"));
 }
 
 FText UVisualGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const

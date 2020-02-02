@@ -1,19 +1,20 @@
-#include "AssetEditor_DungeonGraph.h"
+#include "DungeonEditor/AssetEditor_DungeonGraph.h"
 #include "IDetailsView.h"
-#include "GenericCommands.h"
 #include "GraphEditor.h"
 #include "PropertyEditorModule.h"
-#include "EdGraph_DungeonTemplate.h"
 #include "Editor/UnrealEd/Public/Kismet2/BlueprintEditorUtils.h"
 #include "Framework/Docking/TabManager.h"
-#include "GraphSchema_DungeonTemplate.h"
-
-#include "MarkerGraphNode.h"
-#include "VisualGraphNode.h"
-#include "EmitterGraphNode.h"
-
-#include "MarkerNode.h"
-#include "VisualNode.h"
+#include "Editor/DungeonTemplate.h"
+#include "Framework/Commands/GenericCommands.h"
+#include "Toolkits/AssetEditorToolkit.h"
+#include "ScopedTransaction.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Modules/ModuleManager.h"
+#include "DungeonEditor/EdGraph_DungeonTemplate.h"
+#include "DungeonEditor/GraphSchema_DungeonTemplate.h"
+#include "DungeonEditor/MarkerNode/MarkerGraphNode.h"
+#include "DungeonEditor/EmitterNode/EmitterGraphNode.h"
+#include "Editor/MarkerNode.h"
 
 #define LOCTEXT_NAMESPACE "FAssetEditor_DungeonGraph"
 
@@ -138,27 +139,27 @@ bool FAssetEditor_DungeonGraph::CanDeleteNodes()
 	return true;
 }
 
-void FAssetEditor_DungeonGraph::RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
+void FAssetEditor_DungeonGraph::RegisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
 {
-	auto WorkspaceMenuCategory = TabManager->AddLocalWorkspaceMenuCategory(FText::FromString("Custom Editor"));
-	//auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
+    WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(FText::FromString("Custom Editor"));
+    auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
-	FAssetEditorToolkit::RegisterTabSpawners(TabManager);
+	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
 	TabManager->RegisterTabSpawner(FDungeonTemplateAssetEditorTabs::ViewportID, FOnSpawnTab::CreateSP(this, &FAssetEditor_DungeonGraph::SpawnTab_Viewport))
 		.SetDisplayName(FText::FromString("Viewport"))
-		.SetGroup(WorkspaceMenuCategory)
+		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Viewports"));
 
 	TabManager->RegisterTabSpawner(FDungeonTemplateAssetEditorTabs::DungeonTemplatePropertyID, FOnSpawnTab::CreateSP(this, &FAssetEditor_DungeonGraph::SpawnTab_Details))
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
-		.SetGroup(WorkspaceMenuCategory)
+		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
 }
 
-void FAssetEditor_DungeonGraph::UnregisterTabSpawners(const TSharedRef<FTabManager>& TabManager)
+void FAssetEditor_DungeonGraph::UnregisterTabSpawners(const TSharedRef<class FTabManager>& InTabManager)
 {
-	FAssetEditorToolkit::UnregisterTabSpawners(TabManager);
+	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
 
 	TabManager->UnregisterTabSpawner(FDungeonTemplateAssetEditorTabs::ViewportID);
 	TabManager->UnregisterTabSpawner(FDungeonTemplateAssetEditorTabs::DungeonTemplatePropertyID);

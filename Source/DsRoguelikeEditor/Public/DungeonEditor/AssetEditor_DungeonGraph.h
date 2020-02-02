@@ -1,7 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DungeonTemplate.h"
+#include "Toolkits/AssetEditorToolkit.h"
+#include "Misc/NotifyHook.h"
+
+class UDungeonTemplate;
 
 class FAssetEditor_DungeonGraph : public FAssetEditorToolkit, public FNotifyHook, public FGCObject
 {

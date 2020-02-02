@@ -2,9 +2,9 @@
 
 #include "DsRoguelikeEditor.h"
 #include "Modules/ModuleManager.h"
-#include "DungeonTemplateAction.h"
-#include "GraphPanelNodeFactory_DungeonTemplate.h"
+#include "DungeonEditor/DungeonTemplateAction.h"
 #include "EdGraphUtilities.h"
+#include "DungeonEditor/GraphPanelNodeFactory_DungeonTemplate.h"
 
 IMPLEMENT_GAME_MODULE(FDsRoguelikeEditorModule, DsRoguelikeEditor);
 

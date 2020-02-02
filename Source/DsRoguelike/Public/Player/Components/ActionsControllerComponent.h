@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "ActionType.h"
-#include "PlayerAction.h"
+#include "Player/ActionType.h"
+#include "Player/PlayerAction.h"
 #include "ActionsControllerComponent.generated.h"
 
 class UBaseAction;

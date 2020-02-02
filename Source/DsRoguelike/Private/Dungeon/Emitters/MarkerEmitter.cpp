@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MarkerEmitter.h"
-#include "Dungeon.h"
-#include "DungeonBuilder.h"
+#include "Dungeon/Emitters/MarkerEmitter.h"
+#include "Dungeon/Dungeon.h"
+#include "Dungeon/DungeonBuilder.h"
 
 void UMarkerEmitter::EmitMarkers(UDungeonBuilder* DungeonBuilder, ADungeon* Dungeon)
 {

@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "GridDungeonMarkerEmitter.h"
-#include "Dungeon.h"
-#include "GridDungeonBuilder.h"
-#include "DungeonDirections.h"
-#include "DungeonMarker.h"
+#include "Dungeon/Emitters/GridDungeonMarkerEmitter.h"
+#include "Dungeon/Dungeon.h"
+#include "Dungeon/GridDungeonBuilder.h"
+#include "Dungeon/DungeonDirections.h"
+#include "Dungeon/DungeonMarker.h"
 
 void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* Dungeon)
 {

@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "VisualNode.h"
-#include "StaticMeshNode.h"
-#include "ActorNode.h"
+#include "Editor/VisualNode.h"
+#include "Editor/StaticMeshNode.h"
+#include "Editor/ActorNode.h"
 
 UVisualNode::UVisualNode()
 {

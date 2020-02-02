@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "BaseMeleeWeapon.h"
-#include "TraceComponent.h"
-#include "MeleeDamageEvent.h"
-#include "MeleeDamageType.h"
+#include "Weapon/BaseMeleeWeapon.h"
+#include "Weapon/TraceComponent.h"
+#include "Weapon/DamageType/MeleeDamageEvent.h"
+#include "Weapon/DamageType/MeleeDamageType.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values

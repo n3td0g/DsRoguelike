@@ -1,5 +1,5 @@
-#include "EdGraph_DungeonTemplate.h"
-#include "DungeonTemplate.h"
+#include "DungeonEditor/EdGraph_DungeonTemplate.h"
+#include "Editor/DungeonTemplate.h"
 
 UEdGraph_DungeonTemplate::UEdGraph_DungeonTemplate()
 {

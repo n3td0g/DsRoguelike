@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "LookTargetComponent.h"
+#include "Player/Components/LookTargetComponent.h"
 //#include "Kismet/KismetMathLibrary.h"
 
 ULookTargetComponent::ULookTargetComponent()

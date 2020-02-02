@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MarkerNode.h"
-#include "DungeonTemplate.h"
-#include "VisualNode.h"
+#include "Editor/MarkerNode.h"
+#include "Editor/DungeonTemplate.h"
+#include "Editor/VisualNode.h"
 
 UMarkerNode::UMarkerNode()
 {

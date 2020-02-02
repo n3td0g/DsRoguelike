@@ -21,6 +21,7 @@ public class DsRoguelikeEditor : ModuleRules
                 "Kismet",
                 "KismetWidgets",
                 "ApplicationCore",
+                "ToolMenus",
 				// ... add private dependencies that you statically link with here ...
 			}
             );

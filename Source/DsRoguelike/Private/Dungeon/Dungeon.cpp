@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Dungeon.h"
-#include "DungeonTemplate.h"
-#include "DungeonBuilder.h"
-#include "MarkerNode.h"
-#include "VisualNode.h"
-#include "MarkerEmitter.h"
-#include "DungeonMarker.h"
+#include "Dungeon/Dungeon.h"
+#include "Editor/DungeonTemplate.h"
+#include "Dungeon/DungeonBuilder.h"
+#include "Editor/MarkerNode.h"
+#include "Editor/VisualNode.h"
+#include "Dungeon/Emitters/MarkerEmitter.h"
+#include "Dungeon/DungeonMarker.h"
 
 // Sets default values
 ADungeon::ADungeon()

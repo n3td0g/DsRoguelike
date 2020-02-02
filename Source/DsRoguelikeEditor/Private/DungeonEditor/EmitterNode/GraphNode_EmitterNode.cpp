@@ -1,6 +1,7 @@
-#include "GraphNode_EmitterNode.h"
+#include "DungeonEditor/EmitterNode/GraphNode_EmitterNode.h"
 #include "Math/Color.h"
-#include "EmitterGraphNode.h"
+#include "DungeonEditor/EmitterNode/EmitterGraphNode.h"
+#include "Widgets/SBoxPanel.h"
 
 void SGraphNode_EmitterNode::Construct(const FArguments& InArgs, UEmitterGraphNode* InNode)
 {

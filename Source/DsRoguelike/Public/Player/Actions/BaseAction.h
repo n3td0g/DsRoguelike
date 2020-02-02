@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "UObject/NoExportTypes.h"
-#include "ActionType.h"
+#include "Player/ActionType.h"
 #include "BaseAction.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FActionFinished);

@@ -1,19 +1,20 @@
-﻿#include "PlayerCharacter.h"
+﻿#include "Player/PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
-#include "LookTargetComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/InputComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "StatsComponent.h"
-#include "MeleeDamageEvent.h"
+#include "Weapon/DamageType/MeleeDamageEvent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "DrawDebugHelpers.h"
 #include "Animation/AnimMontage.h"
-#include "BaseMeleeWeapon.h"
+#include "Weapon/BaseMeleeWeapon.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Player/Components/StatsComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Player/Components/LookTargetComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATempCharacter
@@ -667,8 +668,8 @@ void APlayerCharacter::LookToTarget()
 
 		FRotator NewControlRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetComponentLocation());
 		NewControlRotation.Pitch += LookToTargetPitchOffset;
-		const FRotator& CurrentRotation = Controller->GetControlRotation();
-		const FRotator& TargetControllerRotation = FMath::RInterpTo(CurrentRotation, NewControlRotation, GetWorld()->DeltaTimeSeconds, RotateCameraToTargetSpeed);
+		const FRotator& CurrentControllerRotation = Controller->GetControlRotation();
+		const FRotator& TargetControllerRotation = FMath::RInterpTo(CurrentControllerRotation, NewControlRotation, GetWorld()->DeltaTimeSeconds, RotateCameraToTargetSpeed);
 		Controller->SetControlRotation(TargetControllerRotation);
 
 		if (CurrentAction.ActionType == EActionType::AT_Idle || CurrentAction.ActionType == EActionType::AT_Block) {

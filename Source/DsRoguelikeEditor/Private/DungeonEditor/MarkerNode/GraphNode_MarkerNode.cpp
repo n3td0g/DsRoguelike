@@ -1,11 +1,13 @@
-#include "GraphNode_MarkerNode.h"
+#include "DungeonEditor/MarkerNode/GraphNode_MarkerNode.h"
 #include "Math/Color.h"
-#include "MarkerGraphNode.h"
-#include "MarkerNode.h"
-#include "DungeonTemplatePin.h"
-#include "EdGraph_DungeonTemplate.h"
-#include "DungeonTemplate.h"
-#include "SInlineEditableTextBlock.h"
+#include "DungeonEditor/MarkerNode/MarkerGraphNode.h"
+#include "Widgets/SBoxPanel.h"
+#include "DungeonEditor/DungeonTemplatePin.h"
+#include "DungeonEditor/EdGraph_DungeonTemplate.h"
+#include "Editor/MarkerNode.h"
+#include "Editor/DungeonTemplate.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 void SGraphNode_MarkerNode::Construct(const FArguments& InArgs, UMarkerGraphNode* InNode)
 {

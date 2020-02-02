@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "DungeonTemplateFactory.h"
-#include "DungeonTemplate.h"
+#include "DungeonEditor/DungeonTemplateFactory.h"
+#include "Editor/DungeonTemplate.h"
 
 UDungeonTemplateFactory::UDungeonTemplateFactory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

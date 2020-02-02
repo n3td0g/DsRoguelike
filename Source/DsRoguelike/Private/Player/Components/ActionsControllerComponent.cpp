@@ -1,5 +1,5 @@
-#include "ActionsControllerComponent.h"
-#include "BaseAction.h"
+#include "Player/Components/ActionsControllerComponent.h"
+#include "Player/Actions/BaseAction.h"
 
 UActionsControllerComponent::UActionsControllerComponent()
 {

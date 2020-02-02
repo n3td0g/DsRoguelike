@@ -1,8 +1,9 @@
-#include "GraphNode_VisualNode.h"
+#include "DungeonEditor/VisualNode/GraphNode_VisualNode.h"
 #include "Math/Color.h"
-#include "VisualGraphNode.h"
 #include "SGraphPanel.h"
-#include "DungeonTemplatePin.h"
+#include "DungeonEditor/VisualNode/VisualGraphNode.h"
+#include "Widgets/SBoxPanel.h"
+#include "DungeonEditor/DungeonTemplatePin.h"
 
 /** Widget for overlaying an execution-order index onto a node */
 class SVisualNodeIndex : public SCompoundWidget

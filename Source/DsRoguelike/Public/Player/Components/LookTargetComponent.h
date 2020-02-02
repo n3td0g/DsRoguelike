@@ -17,7 +17,6 @@ class DSROGUELIKE_API ULookTargetComponent : public USceneComponent
 
 public:
 	ULookTargetComponent();
-
 	UFUNCTION(BlueprintCallable)
 	void ActivateTarget(USceneComponent* Component);
 	

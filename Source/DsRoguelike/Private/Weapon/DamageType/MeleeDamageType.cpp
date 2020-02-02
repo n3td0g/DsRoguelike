@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "MeleeDamageType.h"
+#include "Weapon/DamageType/MeleeDamageType.h"
 
 
 

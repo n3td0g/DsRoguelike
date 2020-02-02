@@ -1,18 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-#include "MarkerGraphNode.h"
+#include "DungeonEditor/MarkerNode/MarkerGraphNode.h"
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraph/EdGraph.h"
-#include "VisualGraphNode.h"
-#include "VisualNode.h"
-#include "MarkerNode.h"
-#include "EdGraph_DungeonTemplate.h"
-#include "DungeonTemplate.h"
+#include "Editor/MarkerNode.h"
+#include "DungeonEditor/VisualNode/VisualGraphNode.h"
+#include "DungeonEditor/EdGraph_DungeonTemplate.h"
+#include "Editor/DungeonTemplate.h"
 
 
 void UMarkerGraphNode::AllocateDefaultPins()
 {
-	CreatePin(EGPD_Output, "MultipleNodes", FString(), nullptr, TEXT("Out"));
+	CreatePin(EGPD_Output, TEXT("MultipleNodes"), nullptr, TEXT("Out"));
 }
 
 FText UMarkerGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
@@ -64,7 +62,7 @@ void UMarkerGraphNode::DestroyNode()
 	auto ParrentGraph = Cast<UEdGraph_DungeonTemplate>(GetGraph());
 
 	if (ParrentGraph) {
-		auto DungeonTemplate = ParrentGraph->GetDungeonTemplate();
+		UDungeonTemplate* DungeonTemplate = ParrentGraph->GetDungeonTemplate();
 		if (DungeonTemplate) {
 			if (DungeonTemplate->MarkerNodes.Contains(MarkerNode->MarkerName)) {
 				DungeonTemplate->MarkerNodes.Remove(MarkerNode->MarkerName);

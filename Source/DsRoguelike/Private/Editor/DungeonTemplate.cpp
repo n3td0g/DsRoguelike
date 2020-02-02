@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "DungeonTemplate.h"
-#include "MarkerNode.h"
+#include "Editor/DungeonTemplate.h"
+#include "Editor/MarkerNode.h"
 
 UDungeonTemplate::UDungeonTemplate()
 {

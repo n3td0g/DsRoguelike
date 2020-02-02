@@ -1,4 +1,4 @@
-#include "DungeonTemplatePin.h"
+#include "DungeonEditor/DungeonTemplatePin.h"
 #include "Math/Color.h"
 
 //PinNode..........................................................................

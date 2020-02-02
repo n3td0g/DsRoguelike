@@ -1,18 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "GraphSchema_DungeonTemplate.h"
-#include "EdGraph_DungeonTemplate.h"
+#include "DungeonEditor/GraphSchema_DungeonTemplate.h"
 #include "ConnectionDrawingPolicy.h"
 #include "GraphEditorActions.h"
-#include "GenericCommands.h"
-#include "DungeonTemplate.h"
-#include "MarkerGraphNode.h"
-#include "VisualGraphNode.h"
-#include "EmitterGraphNode.h"
-#include "MarkerNode.h"
-#include "VisualNode.h"
-#include "ConnectionDrawingPolicy_DungeonGraph.h"
+#include "ToolMenus.h"
 #include "EdGraph/EdGraph.h"
+#include "EdGraph/EdGraphNode.h"
+#include "DungeonEditor/MarkerNode/MarkerGraphNode.h"
+#include "DungeonEditor/EdGraph_DungeonTemplate.h"
+#include "Editor/DungeonTemplate.h"
+#include "DungeonEditor/VisualNode/VisualGraphNode.h"
+#include "Editor/VisualNode.h"
+#include "DungeonEditor/EmitterNode/EmitterGraphNode.h"
+#include "DungeonEditor/ConnectionDrawingPolicy_DungeonGraph.h"
+#include "Framework/Commands/GenericCommands.h"
+#include "Editor/MarkerNode.h"
 
 UEdGraphNode* FCustomSchemaAction_NewNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode /*= true*/)
 {
@@ -138,20 +140,18 @@ void UGraphSchema_DungeonTemplate::GetGraphContextActions(FGraphContextMenuBuild
 	}
 }
 
-void UGraphSchema_DungeonTemplate::GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, FMenuBuilder* MenuBuilder, bool bIsDebugging) const
+void UGraphSchema_DungeonTemplate::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
-	if (InGraphNode != nullptr)
+	if (Context && Context->Node)
 	{
-		MenuBuilder->BeginSection("GenericGraphAssetGraphSchemaNodeActions", FText::FromString(TEXT("Node Actions")));
+		FToolMenuSection& Section = Menu->AddSection("GenericGraphAssetGraphSchemaNodeActions", FText::FromString(TEXT("Node Actions")));
 		{
-			MenuBuilder->AddMenuEntry(FGenericCommands::Get().Delete);
-
-			MenuBuilder->AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
+			Section.AddMenuEntry(FGenericCommands::Get().Delete);
+			Section.AddMenuEntry(FGraphEditorCommands::Get().BreakNodeLinks);
 		}
-		MenuBuilder->EndSection();
 	}
 
-	Super::GetContextMenuActions(CurrentGraph, InGraphNode, InGraphPin, MenuBuilder, bIsDebugging);
+	Super::GetContextMenuActions(Menu, Context);
 }
 
 const FPinConnectionResponse UGraphSchema_DungeonTemplate::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
@@ -222,7 +222,7 @@ void UGraphSchema_DungeonTemplate::BreakPinLinks(UEdGraphPin& TargetPin, bool bS
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
 }
 
-void UGraphSchema_DungeonTemplate::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin)
+void UGraphSchema_DungeonTemplate::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
 {
 	const FScopedTransaction Transaction(FText::FromString(TEXT("DungeonTemplate: BreakSinglePinLink")));
 

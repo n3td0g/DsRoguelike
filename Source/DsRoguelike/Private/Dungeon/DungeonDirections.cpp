@@ -1,4 +1,4 @@
-#include "DungeonDirections.h"
+#include "Dungeon/DungeonDirections.h"
 
 const FIntPoint FDungeonDirections::DirectionUp = FIntPoint(0, 1);
 const FIntPoint FDungeonDirections::DirectionDown = FIntPoint(0, -1);

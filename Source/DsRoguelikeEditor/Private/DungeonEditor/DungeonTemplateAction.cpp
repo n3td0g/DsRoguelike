@@ -1,7 +1,7 @@
-#include "DungeonTemplateAction.h"
+#include "DungeonEditor/DungeonTemplateAction.h"
 #include "Developer/AssetTools/Public/AssetTypeCategories.h"
-#include "AssetEditor_DungeonGraph.h"
-#include "DungeonTemplate.h"
+#include "DungeonEditor/AssetEditor_DungeonGraph.h"
+#include "Editor/DungeonTemplate.h"
 
 FText FDungeonTemplateAction::GetName() const
 {
