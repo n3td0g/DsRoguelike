@@ -35,11 +35,6 @@ void UGridDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 	PrintDungeon();	
 }
 
-FORCEINLINE const int32& UGridDungeonBuilder::GetCell(int32 I, int32 J)
-{
-	return DungeonGrid[I][J];
-}
-
 void UGridDungeonBuilder::Initialize()
 {
 	CleanupLeafs();	

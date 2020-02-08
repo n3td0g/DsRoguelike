@@ -54,7 +54,7 @@ public:
 	
 public:
 	virtual void GenerateDungeon(ADungeon* ParentDungeon) override;
-	FORCEINLINE const int32& GetCell(int32 I, int32 J);
+    FORCEINLINE const int32& GetCell(int32 I, int32 J) { return DungeonGrid[I][J]; }
 
 protected:
 	void Initialize();

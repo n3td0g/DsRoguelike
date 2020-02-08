@@ -17,7 +17,7 @@ ADungeon::ADungeon()
 	BuilderClass = UDungeonBuilder::StaticClass();
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
 	RootComponent->bVisualizeComponent = true;
 #endif
 }
