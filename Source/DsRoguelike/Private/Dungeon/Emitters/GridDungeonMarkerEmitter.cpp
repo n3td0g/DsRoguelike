@@ -31,14 +31,25 @@ void UGridDungeonMarkerEmitter::EmitMarkers(UDungeonBuilder* Builder, ADungeon* 
 
 	const auto& BuilderConfig = Dungeon->BuilderConfig;
 
-	auto& FloorMarkers = DungeonBuilder->Markers.Add(TEXT("Floor"));
-	auto& WallMarkers = DungeonBuilder->Markers.Add(TEXT("Wall"));
-	auto& EntranceMarkers = DungeonBuilder->Markers.Add(TEXT("Entrance"));
-	auto& DoorMarkers = DungeonBuilder->Markers.Add(TEXT("Door"));
-	auto& WallTorchMarkers = DungeonBuilder->Markers.Add(TEXT("WallTorch"));
-	auto& FloorTorchMarkers = DungeonBuilder->Markers.Add(TEXT("FloorTorch"));
-	auto& WindowMarkers = DungeonBuilder->Markers.Add(TEXT("Window"));
-	auto& SeparatorMarkers = DungeonBuilder->Markers.Add(TEXT("Separator"));
+	const FName NAME_Floor = TEXT("Floor");
+	const FName NAME_Wall = TEXT("Wall");
+	const FName NAME_Entrance = TEXT("Entrance");
+	const FName NAME_Door = TEXT("Door");
+	const FName NAME_WallTorch = TEXT("WallTorch");
+	const FName NAME_FloorTorch = TEXT("FloorTorch");
+	const FName NAME_Window = TEXT("Window");
+	const FName NAME_Separator = TEXT("Separator");
+
+	DungeonBuilder->Markers.Reserve(8);
+
+	TArray<FDungeonMarker>& FloorMarkers = DungeonBuilder->Markers.Add(NAME_Floor);
+	TArray<FDungeonMarker>& WallMarkers = DungeonBuilder->Markers.Add(NAME_Wall);
+	TArray<FDungeonMarker>& EntranceMarkers = DungeonBuilder->Markers.Add(NAME_Entrance);
+	TArray<FDungeonMarker>& DoorMarkers = DungeonBuilder->Markers.Add(NAME_Door);
+	TArray<FDungeonMarker>& WallTorchMarkers = DungeonBuilder->Markers.Add(NAME_WallTorch);
+	TArray<FDungeonMarker>& FloorTorchMarkers = DungeonBuilder->Markers.Add(NAME_FloorTorch);
+	TArray<FDungeonMarker>& WindowMarkers = DungeonBuilder->Markers.Add(NAME_Window);
+	TArray<FDungeonMarker>& SeparatorMarkers = DungeonBuilder->Markers.Add(NAME_Separator);
 
 	float HalfCellSize = BuilderConfig.CellSize * 0.5f;
 	float HalfWallThickness = BuilderConfig.WallThickness * 0.5f;
