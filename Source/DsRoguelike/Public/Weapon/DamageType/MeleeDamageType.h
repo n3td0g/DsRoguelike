@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/DamageType.h"
+
 #include "MeleeDamageType.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class DSROGUELIKE_API UMeleeDamageType : public UDamageType
 {
 	GENERATED_BODY()
-	
 };

@@ -24,11 +24,12 @@ void ULookTargetComponent::DeactivateTarget()
 	ComponentLookAt = nullptr;
 }
 
-void ULookTargetComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
+void ULookTargetComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (ComponentLookAt) {
+	if (ComponentLookAt)
+	{
 		/*const FVector& RightVector = ComponentLookAt->GetRightVector();
 		const FVector& ForwardVector = ComponentLookAt->GetForwardVector();
 		const FVector& UpVector = ComponentLookAt->GetUpVector();

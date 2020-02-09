@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Dungeon/DungeonBuilder.h"
+
 #include "Dungeon/Dungeon.h"
 
 UDungeonBuilder::UDungeonBuilder()
@@ -10,19 +11,22 @@ UDungeonBuilder::UDungeonBuilder()
 
 void UDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 {
-	if (!ParentDungeon) {
+	if (!ParentDungeon)
+	{
 		return;
 	}
 
 	EmptyDungeon();
 
 	Dungeon = ParentDungeon;
-	BuilderConfig = Dungeon->BuilderConfig;	
+	BuilderConfig = Dungeon->BuilderConfig;
 
 	DungeonGrid = new int32*[BuilderConfig.DungeonWidth];
-	for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
+	for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I)
+	{
 		DungeonGrid[I] = new int32[BuilderConfig.DungeonHeight];
-		for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J) {
+		for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J)
+		{
 			DungeonGrid[I][J] = DUNGEON_NOTHING;
 		}
 	}
@@ -31,23 +35,26 @@ void UDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 void UDungeonBuilder::BeginDestroy()
 {
 	Super::BeginDestroy();
-	CleanDungeon();	
+	CleanDungeon();
 }
 
 void UDungeonBuilder::PlaceMarker(const FName& MarkerName, const FTransform& Transform)
 {
-
 }
 
 EDungeonCellType UDungeonBuilder::GetCellType(FIntPoint CellPosition)
 {
-	if (DungeonGrid) {
-		if (IsPointValid(CellPosition)) {
+	if (DungeonGrid)
+	{
+		if (IsPointValid(CellPosition))
+		{
 			int32 Cell = DungeonGrid[CellPosition.X][CellPosition.Y];
-			if (Cell & DUNGEON_ROOM) {
+			if (Cell & DUNGEON_ROOM)
+			{
 				return EDungeonCellType::CT_Room;
 			}
-			if (Cell & DUNGEON_CORRIDOR) {
+			if (Cell & DUNGEON_CORRIDOR)
+			{
 				return EDungeonCellType::CT_Corridor;
 			}
 		}
@@ -74,8 +81,10 @@ void UDungeonBuilder::EmptyDungeon()
 
 void UDungeonBuilder::CleanDungeon()
 {
-	if (DungeonGrid) {
-		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
+	if (DungeonGrid)
+	{
+		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I)
+		{
 			delete[] DungeonGrid[I];
 		}
 		delete[] DungeonGrid;

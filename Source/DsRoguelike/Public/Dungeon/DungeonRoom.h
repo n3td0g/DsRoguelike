@@ -17,7 +17,7 @@ USTRUCT(BlueprintType)
 struct FDungeonRoom
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(BlueprintReadWrite, Category = "Room")
 	FIntPoint RoomPosition;
 

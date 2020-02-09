@@ -67,7 +67,8 @@ void SGraphNode_MarkerNode::UpdateGraphNode()
 
 void SGraphNode_MarkerNode::CreatePinWidgets()
 {
-	for (auto Pin : MarkerNode->Pins) {
+	for (auto Pin : MarkerNode->Pins)
+	{
 		TSharedPtr<SGraphPin> NewPin = SNew(SDungeonTemplatePin, Pin);
 		NewPin->SetIsEditable(IsEditable);
 		AddPin(NewPin.ToSharedRef());
@@ -119,23 +120,27 @@ void SGraphNode_MarkerNode::OnNameTextCommited(const FText& InText, ETextCommit:
 	SGraphNode::OnNameTextCommited(InText, CommitInfo);
 
 	auto EdNode_Node = Cast<UMarkerGraphNode>(GraphNode);
-	if (!EdNode_Node) {
+	if (!EdNode_Node) 
+	{
 		return;
 	}
 
 	auto DungeonGraph = Cast<UEdGraph_DungeonTemplate>(EdNode_Node->GetGraph());
-	if (!DungeonGraph) {
+	if (!DungeonGraph)
+	{
 		return;
 	}
 
 	auto DungeonTemplate = DungeonGraph->GetDungeonTemplate();
-	if (!DungeonTemplate) {
+	if (!DungeonTemplate)
+	{
 		return;
 	}
 
 	const FName NewName = *(InText.ToString());
 
-	if (DungeonTemplate->IsNameOccupied(NewName)) {
+	if (DungeonTemplate->IsNameOccupied(NewName))
+	{
 		return;
 	}
 	

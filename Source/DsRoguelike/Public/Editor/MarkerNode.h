@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+
 #include "MarkerNode.generated.h"
 
 class UDungeonTemplate;
@@ -12,14 +13,14 @@ UCLASS()
 class DSROGUELIKE_API UMarkerNode : public UObject
 {
 	GENERATED_BODY()
-	
+
 public:
 	UMarkerNode();
-	virtual ~UMarkerNode();	
-public:
+	virtual ~UMarkerNode();
 
+public:
 	UPROPERTY(BlueprintReadOnly, Category = "MarkerNode")
-	UDungeonTemplate* DungeonTemplate;	
+	UDungeonTemplate* DungeonTemplate;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Visual")
 	TArray<class UVisualNode*> VisualNodes;
@@ -28,5 +29,4 @@ public:
 	FName MarkerName;
 
 protected:
-	
 };

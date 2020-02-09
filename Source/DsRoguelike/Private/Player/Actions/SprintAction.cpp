@@ -1,21 +1,22 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player/Actions/SprintAction.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
-
-
 
 bool USprintAction::StartAction()
 {
-	if (!MovementComponent) {
+	if (!MovementComponent)
+	{
 		auto Owner = GetOwner();
-		if (Owner) {
+		if (Owner)
+		{
 			MovementComponent = Owner->FindComponentByClass<UCharacterMovementComponent>();
 		}
 	}
 
-	if (MovementComponent) {
-
+	if (MovementComponent)
+	{
 		return true;
 	}
 
@@ -34,5 +35,4 @@ bool USprintAction::StopAction(bool Force)
 
 void USprintAction::ActionTick(float DeltaTime)
 {
-
 }

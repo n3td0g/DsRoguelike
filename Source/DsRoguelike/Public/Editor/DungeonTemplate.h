@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+
 #include "DungeonTemplate.generated.h"
 
 class UMarkerNode;
@@ -19,8 +20,7 @@ public:
 public:
 	UMarkerNode* CreateMarkerNode();
 	bool IsNameOccupied(const FName& MarkerName);
-	
-	
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Properties")
 	FString Name;
@@ -35,5 +35,4 @@ public:
 
 private:
 	FName GetFreeMarkerName();
-	
 };

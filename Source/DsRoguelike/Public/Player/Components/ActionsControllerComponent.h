@@ -1,22 +1,23 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "CoreMinimal.h"
 #include "Player/ActionType.h"
 #include "Player/PlayerAction.h"
+
 #include "ActionsControllerComponent.generated.h"
 
 class UBaseAction;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class DSROGUELIKE_API UActionsControllerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UActionsControllerComponent();
 
-public:	
+public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
@@ -31,7 +32,7 @@ protected:
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TMap<EActionType, UBaseAction*> Actions;
-	
+
 private:
 	UPROPERTY(Transient)
 	TArray<FPlayerAction> ActionsMemory;

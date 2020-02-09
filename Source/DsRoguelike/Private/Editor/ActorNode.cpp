@@ -1,17 +1,19 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Editor/ActorNode.h"
+
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "UObject/Package.h"
 #include "UObject/PropertyPortFlags.h"
-#include "Engine/Engine.h"
 #include "UObject/UObjectHash.h"
 
 #pragma optimize("", off)
 
 void UActorNode::Process(const FTransform& MarkerTransform, UWorld* World)
 {
-	if (ActorClass) {
+	if (ActorClass)
+	{
 		FTransform WorldTransform = Transform * MarkerTransform;
 
 		if (ActorTemplate && ActorTemplate->GetClass() == ActorClass)
@@ -44,8 +46,8 @@ void UActorNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 {
 	if (PropertyChangedEvent.Property)
 	{
-		if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass)) {
-			
+		if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass))
+		{
 			SetChildActorClass(ActorClass);
 		}
 	}
@@ -55,8 +57,10 @@ void UActorNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 
 void UActorNode::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.Property) {
-		if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass)) {
+	if (PropertyChangedEvent.Property)
+	{
+		if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UActorNode, ActorClass))
+		{
 			SetChildActorClass(ActorClass);
 		}
 	}
@@ -78,7 +82,8 @@ void UActorNode::Serialize(FArchive& Ar)
 	{
 		if (GIsEditor && Ar.IsLoading() && !IsTemplate())
 		{
-			// If we're not a template then we do not want the duplicate so serialize manually and destroy the template that was created for us
+			// If we're not a template then we do not want the duplicate so serialize manually and destroy the template that was
+			// created for us
 			Ar.Serialize(&ActorTemplate, sizeof(UObject*));
 
 			if (AActor* UnwantedDuplicate = static_cast<AActor*>(FindObjectWithOuter(this, AActor::StaticClass())))
@@ -103,9 +108,10 @@ void UActorNode::Serialize(FArchive& Ar)
 #if WITH_EDITOR
 	if (ActorClass == nullptr)
 	{
-		// It is unknown how this state can come to be, so for now we'll simply correct the issue and record that it occurs and 
+		// It is unknown how this state can come to be, so for now we'll simply correct the issue and record that it occurs and
 		// and if it is occurring frequently, then investigate how the state comes to pass
-		if (!ensureAlwaysMsgf(ActorTemplate == nullptr, TEXT("Found unexpected ActorTemplate %s when ActorClass is null"), *ActorTemplate->GetFullName()))
+		if (!ensureAlwaysMsgf(ActorTemplate == nullptr, TEXT("Found unexpected ActorTemplate %s when ActorClass is null"),
+				*ActorTemplate->GetFullName()))
 		{
 			ActorTemplate = nullptr;
 		}
@@ -122,8 +128,9 @@ void UActorNode::Serialize(FArchive& Ar)
 				ActorTemplate = CastChecked<AActor>(StaticDuplicateObject(ActorTemplate, this, *TemplateName));
 			}
 		}
-		else {
-			//ActorTemplate = CastChecked<UActorNode>(GetArchetype())->ActorTemplate;
+		else
+		{
+			// ActorTemplate = CastChecked<UActorNode>(GetArchetype())->ActorTemplate;
 			SetChildActorClass(ActorClass);
 		}
 	}
@@ -132,7 +139,8 @@ void UActorNode::Serialize(FArchive& Ar)
 
 UObject* UActorNode::GetObject()
 {
-	if (ActorTemplate) {
+	if (ActorTemplate)
+	{
 		return ActorTemplate;
 	}
 	return Super::GetObject();
@@ -147,7 +155,8 @@ void UActorNode::SetChildActorClass(TSubclassOf<AActor> InClass)
 		{
 			Modify();
 
-			AActor* NewActorTemplate = NewObject<AActor>(GetTransientPackage(), ActorClass, NAME_None, RF_ArchetypeObject | RF_Transactional | RF_Public);
+			AActor* NewActorTemplate =
+				NewObject<AActor>(GetTransientPackage(), ActorClass, NAME_None, RF_ArchetypeObject | RF_Transactional | RF_Public);
 
 			if (ActorTemplate)
 			{
@@ -159,9 +168,9 @@ void UActorNode::SetChildActorClass(TSubclassOf<AActor> InClass)
 			ActorTemplate->Modify();
 
 			// Now set the actual name and outer to the BPGC.
-			//const FString TemplateName = FString::Printf(TEXT("%s_%s_CAT"), *GetName(), *ActorClass->GetName());
+			// const FString TemplateName = FString::Printf(TEXT("%s_%s_CAT"), *GetName(), *ActorClass->GetName());
 
-			//ActorTemplate->Rename(*TemplateName, this, REN_DoNotDirty | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
+			// ActorTemplate->Rename(*TemplateName, this, REN_DoNotDirty | REN_DontCreateRedirectors | REN_ForceNoResetLoaders);
 		}
 	}
 	else if (ActorTemplate)

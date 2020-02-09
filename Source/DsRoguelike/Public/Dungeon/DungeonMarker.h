@@ -6,11 +6,15 @@ USTRUCT(BlueprintType)
 struct FDungeonMarker
 {
 	GENERATED_BODY()
-	
-	FDungeonMarker() {}
 
-	FDungeonMarker(const FTransform& MarkerTransform) : Transform(MarkerTransform) {}
-	
+	FDungeonMarker()
+	{
+	}
+
+	FDungeonMarker(const FTransform& MarkerTransform) : Transform(MarkerTransform)
+	{
+	}
+
 	UPROPERTY(BlueprintReadOnly)
 	FTransform Transform;
 };

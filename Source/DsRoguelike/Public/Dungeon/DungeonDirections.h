@@ -4,7 +4,7 @@
 USTRUCT(BlueprintType)
 struct FDungeonDirections
 {
-	GENERATED_BODY()	
+	GENERATED_BODY()
 
 	static const FIntPoint DirectionUp;
 	static const FIntPoint DirectionRight;
@@ -13,5 +13,8 @@ struct FDungeonDirections
 	static const int32 NumDirections;
 	static const FIntPoint AllDirections[4];
 
-	static FORCEINLINE int32 GetRandomDirectionIndex() { return FMath::RandRange(0, FDungeonDirections::NumDirections - 1); }
+	static FORCEINLINE int32 GetRandomDirectionIndex()
+	{
+		return FMath::RandRange(0, FDungeonDirections::NumDirections - 1);
+	}
 };

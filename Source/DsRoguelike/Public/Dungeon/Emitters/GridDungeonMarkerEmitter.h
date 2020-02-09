@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Dungeon/Emitters/MarkerEmitter.h"
+
 #include "GridDungeonMarkerEmitter.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class DSROGUELIKE_API UGridDungeonMarkerEmitter : public UMarkerEmitter
 {
 	GENERATED_BODY()
-	
+
 protected:
 	virtual void EmitMarkers(class UDungeonBuilder* DungeonBuilder, class ADungeon* Dungeon) override;
 

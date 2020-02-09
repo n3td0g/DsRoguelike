@@ -22,7 +22,8 @@ FLinearColor UVisualGraphNode::GetNodeTitleColor() const
 
 const UObject* UVisualGraphNode::GetObject()
 {
-	if (!VisualNode) {
+	if (!VisualNode)
+	{
 		return nullptr;
 	}
 

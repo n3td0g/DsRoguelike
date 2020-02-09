@@ -1,14 +1,14 @@
 #pragma once
 #include "DungeonBuilderConfig.generated.h"
- 
+
 USTRUCT(BlueprintType)
-struct FDungeonBuilderConfig 
+struct FDungeonBuilderConfig
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options")
 	float CellSize = 400.0f;
-	
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Options", meta = (ClampMin = 10))
 	int32 DungeonWidth = 50;
 

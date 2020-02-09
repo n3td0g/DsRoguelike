@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Dungeon/GridDungeonBuilder.h"
+
 #include "Dungeon/DungeonDirections.h"
 
 UGridDungeonBuilder::UGridDungeonBuilder()
@@ -11,40 +12,42 @@ UGridDungeonBuilder::UGridDungeonBuilder()
 void UGridDungeonBuilder::GenerateDungeon(ADungeon* ParentDungeon)
 {
 	Super::GenerateDungeon(ParentDungeon);
-	//Init
+	// Init
 	Initialize();
 
-	//Rooms
+	// Rooms
 	ProcessLeaf(RootLeaf, BuilderConfig.Iterations);
 	CreateRoom(RootLeaf);
 	CleanupLeafs();
 
-	//Doors
+	// Doors
 	OpenRooms();
 
-	//Corridors
+	// Corridors
 	CreateCorridors();
-	if (BuilderConfig.bRemoveDeadEnds) {
+	if (BuilderConfig.bRemoveDeadEnds)
+	{
 		RemoveDeadEnds();
 	}
 
 	CheckRooms();
 	PlaceWindows();
 
-	//Debug print
-	PrintDungeon();	
+	// Debug print
+	PrintDungeon();
 }
 
 void UGridDungeonBuilder::Initialize()
 {
-	CleanupLeafs();	
+	CleanupLeafs();
 
 	HalfDungeonWidth = FMath::FloorToInt(BuilderConfig.DungeonWidth * 0.5f);
 	HalfDungeonHeight = FMath::FloorToInt(BuilderConfig.DungeonHeight * 0.5f);
 
 	HalfMinRoomSize = 1 + BuilderConfig.MinRoomSize / 2;
 	HalfMaxRoomSize = (BuilderConfig.MaxRoomSize + 1) / 2;
-	if (HalfMaxRoomSize < HalfMinRoomSize) {
+	if (HalfMaxRoomSize < HalfMinRoomSize)
+	{
 		Swap(HalfMinRoomSize, HalfMaxRoomSize);
 	}
 
@@ -65,7 +68,8 @@ void UGridDungeonBuilder::CleanupLeafs()
 
 void UGridDungeonBuilder::CleanupLeaf(FDungeonLeaf* Leaf)
 {
-	if (!Leaf) {
+	if (!Leaf)
+	{
 		return;
 	}
 	CleanupLeaf(Leaf->LeftLeaf);
@@ -75,31 +79,39 @@ void UGridDungeonBuilder::CleanupLeaf(FDungeonLeaf* Leaf)
 
 void UGridDungeonBuilder::ProcessLeaf(FDungeonLeaf* Leaf, int32 Iteration)
 {
-	if (!Leaf) {
+	if (!Leaf)
+	{
 		return;
 	}
 
-	if (Leaf->RightLeaf != nullptr || Leaf->LeftLeaf != nullptr) {
+	if (Leaf->RightLeaf != nullptr || Leaf->LeftLeaf != nullptr)
+	{
 		return;
 	}
 
-	if (!Iteration) {
+	if (!Iteration)
+	{
 		return;
 	}
 
 	bool SplitHorizontal = FMath::RandBool();
 	float Ratio = (Leaf->LeafSize.Y * 1.0f) / Leaf->LeafSize.X;
-	if (Ratio < BuilderConfig.MinLeafRatio) {
+	if (Ratio < BuilderConfig.MinLeafRatio)
+	{
 		SplitHorizontal = true;
 	}
-	else {
-		if ((1.0f / Ratio) < BuilderConfig.MinLeafRatio) {
+	else
+	{
+		if ((1.0f / Ratio) < BuilderConfig.MinLeafRatio)
+		{
 			SplitHorizontal = false;
 		}
 	}
 
-	if (!SplitLeaf(Leaf, SplitHorizontal)) {
-		if (!SplitLeaf(Leaf, !SplitHorizontal)) {
+	if (!SplitLeaf(Leaf, SplitHorizontal))
+	{
+		if (!SplitLeaf(Leaf, !SplitHorizontal))
+		{
 			return;
 		}
 	}
@@ -110,13 +122,16 @@ void UGridDungeonBuilder::ProcessLeaf(FDungeonLeaf* Leaf, int32 Iteration)
 
 bool UGridDungeonBuilder::SplitLeaf(FDungeonLeaf* Leaf, bool SplitHorizontal)
 {
-	if (!Leaf) {
+	if (!Leaf)
+	{
 		return false;
 	}
 
-	if (SplitHorizontal) {
+	if (SplitHorizontal)
+	{
 		int32 MinWidth = FMath::Max(int32(Leaf->LeafSize.Y * BuilderConfig.MinLeafRatio), HalfMinRoomSize);
-		if (Leaf->LeafSize.X < MinWidth * 2) {
+		if (Leaf->LeafSize.X < MinWidth * 2)
+		{
 			UE_LOG(LogTemp, Log, TEXT("Leaf width is too small -> Width: %d, Height: %d"), Leaf->LeafSize.X, Leaf->LeafSize.Y);
 			return false;
 		}
@@ -124,11 +139,14 @@ bool UGridDungeonBuilder::SplitLeaf(FDungeonLeaf* Leaf, bool SplitHorizontal)
 		float SplitX = MinWidth + FMath::RandRange(0, Leaf->LeafSize.X - MinWidth * 2);
 
 		Leaf->LeftLeaf = new FDungeonLeaf(Leaf->LeafPosition, FIntPoint(SplitX, Leaf->LeafSize.Y));
-		Leaf->RightLeaf = new FDungeonLeaf(FIntPoint(Leaf->LeafPosition.X + SplitX, Leaf->LeafPosition.Y), FIntPoint(Leaf->LeafSize.X - SplitX, Leaf->LeafSize.Y));
+		Leaf->RightLeaf = new FDungeonLeaf(
+			FIntPoint(Leaf->LeafPosition.X + SplitX, Leaf->LeafPosition.Y), FIntPoint(Leaf->LeafSize.X - SplitX, Leaf->LeafSize.Y));
 	}
-	else {
+	else
+	{
 		int32 MinHeight = FMath::Max(int32(Leaf->LeafSize.X * BuilderConfig.MinLeafRatio), HalfMinRoomSize);
-		if (Leaf->LeafSize.Y < MinHeight * 2) {
+		if (Leaf->LeafSize.Y < MinHeight * 2)
+		{
 			UE_LOG(LogTemp, Log, TEXT("Leaf height is too small -> Width: %d, Height: %d"), Leaf->LeafSize.X, Leaf->LeafSize.Y);
 			return false;
 		}
@@ -136,7 +154,8 @@ bool UGridDungeonBuilder::SplitLeaf(FDungeonLeaf* Leaf, bool SplitHorizontal)
 		float SplitY = MinHeight + FMath::RandRange(0, Leaf->LeafSize.Y - MinHeight * 2);
 
 		Leaf->LeftLeaf = new FDungeonLeaf(Leaf->LeafPosition, FIntPoint(Leaf->LeafSize.X, SplitY));
-		Leaf->RightLeaf = new FDungeonLeaf(FIntPoint(Leaf->LeafPosition.X, Leaf->LeafPosition.Y + SplitY), FIntPoint(Leaf->LeafSize.X, Leaf->LeafSize.Y - SplitY));
+		Leaf->RightLeaf = new FDungeonLeaf(
+			FIntPoint(Leaf->LeafPosition.X, Leaf->LeafPosition.Y + SplitY), FIntPoint(Leaf->LeafSize.X, Leaf->LeafSize.Y - SplitY));
 	}
 
 	return true;
@@ -144,11 +163,13 @@ bool UGridDungeonBuilder::SplitLeaf(FDungeonLeaf* Leaf, bool SplitHorizontal)
 
 void UGridDungeonBuilder::CreateRoom(const FDungeonLeaf* Leaf)
 {
-	if (!Leaf) {
+	if (!Leaf)
+	{
 		return;
 	}
 
-	if (Leaf->RightLeaf != nullptr || Leaf->LeftLeaf != nullptr) {
+	if (Leaf->RightLeaf != nullptr || Leaf->LeftLeaf != nullptr)
+	{
 		CreateRoom(Leaf->RightLeaf);
 		CreateRoom(Leaf->LeftLeaf);
 		return;
@@ -160,20 +181,24 @@ void UGridDungeonBuilder::CreateRoom(const FDungeonLeaf* Leaf)
 	int32 Width(0);
 	int32 Height(0);
 
-	if (MaxRoomWidth > MaxRoomHeight) {
+	if (MaxRoomWidth > MaxRoomHeight)
+	{
 		Height = FMath::RandRange(HalfMinRoomSize, MaxRoomHeight);
 		MaxRoomWidth = FMath::Min(MaxRoomWidth, (int32)(Height / BuilderConfig.MinRoomRatio));
 		int32 MinRoomWidth = FMath::Max(HalfMinRoomSize, (int32)(Height * BuilderConfig.MinRoomRatio));
-		if (MaxRoomWidth < MinRoomWidth) {
+		if (MaxRoomWidth < MinRoomWidth)
+		{
 			Swap(MinRoomWidth, MaxRoomWidth);
 		}
 		Width = FMath::RandRange(MinRoomWidth, MaxRoomWidth);
 	}
-	else {
+	else
+	{
 		Width = FMath::RandRange(HalfMinRoomSize, MaxRoomWidth);
 		MaxRoomHeight = FMath::Min(MaxRoomHeight, (int32)(Width / BuilderConfig.MinRoomRatio));
 		int32 MinRoomHeight = FMath::Max(HalfMinRoomSize, (int32)(Width * BuilderConfig.MinRoomRatio));
-		if (MaxRoomHeight < MinRoomHeight) {
+		if (MaxRoomHeight < MinRoomHeight)
+		{
 			Swap(MinRoomHeight, MaxRoomHeight);
 		}
 		Height = FMath::RandRange(MinRoomHeight, MaxRoomHeight);
@@ -186,10 +211,12 @@ void UGridDungeonBuilder::CreateRoom(const FDungeonLeaf* Leaf)
 	Room.RoomPosition = FIntPoint(Row * 2 + 1, Col * 2 + 1);
 
 	int32 RoomRight = (Row + Width) * 2 - 1;
-	int32 RoomTop = (Col + Height) * 2 - 1;	
+	int32 RoomTop = (Col + Height) * 2 - 1;
 
-	for (int32 R = Room.RoomPosition.X; R <= RoomRight; ++R) {
-		for (int32 C = Room.RoomPosition.Y; C <= RoomTop; ++C) {
+	for (int32 R = Room.RoomPosition.X; R <= RoomRight; ++R)
+	{
+		for (int32 C = Room.RoomPosition.Y; C <= RoomTop; ++C)
+		{
 			int32& Data = DungeonGrid[R][C];
 			Data |= DUNGEON_ROOM;
 		}
@@ -202,7 +229,8 @@ void UGridDungeonBuilder::CreateRoom(const FDungeonLeaf* Leaf)
 
 void UGridDungeonBuilder::OpenRooms()
 {
-	for (auto& Room : Rooms) {
+	for (auto& Room : Rooms)
+	{
 		OpenRoom(Room);
 	}
 }
@@ -212,26 +240,34 @@ void UGridDungeonBuilder::OpenRoom(FDungeonRoom& Room)
 	TArray<FIntPoint> DoorPlaces;
 	int32 RoomRight = Room.RoomPosition.X + Room.RoomSize.X - 1;
 	int32 RoomTop = Room.RoomPosition.Y + Room.RoomSize.Y - 1;
-	for (int32 Row = Room.RoomPosition.X + 1; Row <= RoomRight; Row += 2) {
-		if (CheckSill(Row, Room.RoomPosition.Y, FDungeonDirections::DirectionDown)) {
+	for (int32 Row = Room.RoomPosition.X + 1; Row <= RoomRight; Row += 2)
+	{
+		if (CheckSill(Row, Room.RoomPosition.Y, FDungeonDirections::DirectionDown))
+		{
 			DoorPlaces.Push(FIntPoint(Row, Room.RoomPosition.Y));
 		}
-		if (CheckSill(Row, RoomTop, FDungeonDirections::DirectionUp)) {
+		if (CheckSill(Row, RoomTop, FDungeonDirections::DirectionUp))
+		{
 			DoorPlaces.Push(FIntPoint(Row, RoomTop));
 		}
 	}
-	for (int32 Col = Room.RoomPosition.Y + 1; Col <= RoomTop; Col += 2) {
-		if (CheckSill(Room.RoomPosition.X, Col, FDungeonDirections::DirectionLeft)) {
+	for (int32 Col = Room.RoomPosition.Y + 1; Col <= RoomTop; Col += 2)
+	{
+		if (CheckSill(Room.RoomPosition.X, Col, FDungeonDirections::DirectionLeft))
+		{
 			DoorPlaces.Push(FIntPoint(Room.RoomPosition.X, Col));
 		}
-		if (CheckSill(RoomRight, Col, FDungeonDirections::DirectionRight)) {
+		if (CheckSill(RoomRight, Col, FDungeonDirections::DirectionRight))
+		{
 			DoorPlaces.Push(FIntPoint(RoomRight, Col));
 		}
 	}
 
 	int32 NumDoors = FMath::RandRange(BuilderConfig.MinDoorsCount, BuilderConfig.MaxDoorsCount);
-	for (int32 I = 0; I < NumDoors; ++I) {
-		if (DoorPlaces.Num() == 0) {
+	for (int32 I = 0; I < NumDoors; ++I)
+	{
+		if (DoorPlaces.Num() == 0)
+		{
 			break;
 		}
 		int32 DoorIndex = FMath::RandRange(0, DoorPlaces.Num() - 1);
@@ -242,15 +278,18 @@ void UGridDungeonBuilder::OpenRoom(FDungeonRoom& Room)
 
 		FIntPoint EntranceLocation;
 		int32 DirectionIndex = 0;
-		for (auto& Direction : FDungeonDirections::AllDirections) {
+		for (auto& Direction : FDungeonDirections::AllDirections)
+		{
 			EntranceLocation.X = DoorLocation.X + Direction.X;
 			EntranceLocation.Y = DoorLocation.Y + Direction.Y;
-			if (!IsPointValid(EntranceLocation)) {
+			if (!IsPointValid(EntranceLocation))
+			{
 				UE_LOG(LogTemp, Warning, TEXT("Ivalid location: %d; %d"), EntranceLocation.X, EntranceLocation.Y);
 				continue;
 			}
 			int32& Data = DungeonGrid[EntranceLocation.X][EntranceLocation.Y];
-			if (Data & DUNGEON_ROOM) {
+			if (Data & DUNGEON_ROOM)
+			{
 				++DirectionIndex;
 				continue;
 			}
@@ -268,10 +307,12 @@ bool UGridDungeonBuilder::CheckSill(int32 Row, int32 Col, const FIntPoint& Check
 	int32 OpenR = Row + CheckDirection.X * 2;
 	int32 OpenC = Col + CheckDirection.Y * 2;
 
-	if (OpenR <= 0 || OpenC <= 0) {
+	if (OpenR <= 0 || OpenC <= 0)
+	{
 		return false;
 	}
-	if (OpenR >= LastRow || OpenC >= LastCol) {
+	if (OpenR >= LastRow || OpenC >= LastCol)
+	{
 		return false;
 	}
 
@@ -280,18 +321,24 @@ bool UGridDungeonBuilder::CheckSill(int32 Row, int32 Col, const FIntPoint& Check
 
 void UGridDungeonBuilder::CheckRooms()
 {
-	for (int32 I = Rooms.Num() - 1; I >= 0; --I) {
+	for (int32 I = Rooms.Num() - 1; I >= 0; --I)
+	{
 		FDungeonRoom& Room = Rooms[I];
-		if (!CheckRoom(Room)) {
-			for (int32 Row = Room.RoomPosition.X; Row < Room.RoomPosition.X + Room.RoomSize.X; ++Row) {
-				for (int32 Col = Room.RoomPosition.Y; Col < Room.RoomPosition.Y + Room.RoomSize.Y; ++Col) {
+		if (!CheckRoom(Room))
+		{
+			for (int32 Row = Room.RoomPosition.X; Row < Room.RoomPosition.X + Room.RoomSize.X; ++Row)
+			{
+				for (int32 Col = Room.RoomPosition.Y; Col < Room.RoomPosition.Y + Room.RoomSize.Y; ++Col)
+				{
 					DungeonGrid[Row][Col] = DUNGEON_NOTHING;
 				}
 			}
 			Rooms.RemoveAt(I);
 		}
-		else {
-			for (auto& Door : Room.Doors) {
+		else
+		{
+			for (auto& Door : Room.Doors)
+			{
 				DungeonGrid[Door.Location.X][Door.Location.Y] |= ROOM_DOOR;
 			}
 		}
@@ -300,21 +347,25 @@ void UGridDungeonBuilder::CheckRooms()
 
 bool UGridDungeonBuilder::CheckRoom(FDungeonRoom& Room)
 {
-	for (int32 I = Room.Doors.Num() - 1; I >= 0; --I) {
+	for (int32 I = Room.Doors.Num() - 1; I >= 0; --I)
+	{
 		const FDoorInfo& Door = Room.Doors[I];
 		const FIntPoint& Direction = FDungeonDirections::AllDirections[Door.DirectionIndex];
 		int32& Data = DungeonGrid[Door.Location.X + Direction.X][Door.Location.Y + Direction.Y];
-		if (Data & ROOM_ENTRANCE) {
+		if (Data & ROOM_ENTRANCE)
+		{
 			int32 Row = Door.Location.X + Direction.X * 2;
 			int32 Col = Door.Location.Y + Direction.Y * 2;
 			int32& NextData = DungeonGrid[Row][Col];
-			if (IsCoordsValid(Row, Col)) {
-				if (NextData & (DUNGEON_ROOM | DUNGEON_CORRIDOR | ROOM_ENTRANCE)) {
+			if (IsCoordsValid(Row, Col))
+			{
+				if (NextData & (DUNGEON_ROOM | DUNGEON_CORRIDOR | ROOM_ENTRANCE))
+				{
 					Data |= DUNGEON_CORRIDOR;
 					continue;
 				}
 				continue;
-			}			
+			}
 		}
 
 		Room.Doors.RemoveAt(I);
@@ -324,7 +375,8 @@ bool UGridDungeonBuilder::CheckRoom(FDungeonRoom& Room)
 
 void UGridDungeonBuilder::PlaceWindows()
 {
-	for (auto& Room : Rooms) {
+	for (auto& Room : Rooms)
+	{
 		PlaceWindow(Room);
 	}
 }
@@ -334,11 +386,13 @@ void UGridDungeonBuilder::PlaceWindow(FDungeonRoom& Room)
 	int32 RoomRight = Room.RoomPosition.X + Room.RoomSize.X - 1;
 	int32 RoomTop = Room.RoomPosition.Y + Room.RoomSize.Y - 1;
 
-	for (int32 Row = Room.RoomPosition.X; Row <= RoomRight; Row += 2) {
+	for (int32 Row = Room.RoomPosition.X; Row <= RoomRight; Row += 2)
+	{
 		TryToPlaceWindow(Row, Room.RoomPosition.Y, FDungeonDirections::DirectionDown);
 		TryToPlaceWindow(Row, RoomTop, FDungeonDirections::DirectionUp);
 	}
-	for (int32 Col = Room.RoomPosition.Y; Col <= RoomTop; Col += 2) {
+	for (int32 Col = Room.RoomPosition.Y; Col <= RoomTop; Col += 2)
+	{
 		TryToPlaceWindow(Room.RoomPosition.X, Col, FDungeonDirections::DirectionLeft);
 		TryToPlaceWindow(RoomRight, Col, FDungeonDirections::DirectionRight);
 	}
@@ -348,14 +402,17 @@ bool UGridDungeonBuilder::TryToPlaceWindow(int32 Row, int32 Col, const FIntPoint
 {
 	int32 NextR = Row + CheckDirection.X;
 	int32 NextC = Col + CheckDirection.Y;
-	
-	if (!IsCoordsValid(NextR, NextC)) {
+
+	if (!IsCoordsValid(NextR, NextC))
+	{
 		return false;
 	}
 
 	int32& Data = DungeonGrid[NextR][NextC];
-	if (Data & DUNGEON_CORRIDOR) {
-		if (FMath::FRand() < BuilderConfig.ChangeToPlaceWindow) {
+	if (Data & DUNGEON_CORRIDOR)
+	{
+		if (FMath::FRand() < BuilderConfig.ChangeToPlaceWindow)
+		{
 			DungeonGrid[Row][Col] |= ROOM_WINDOW;
 			Data |= ROOM_WINDOW;
 			return true;
@@ -367,8 +424,10 @@ bool UGridDungeonBuilder::TryToPlaceWindow(int32 Row, int32 Col, const FIntPoint
 
 void UGridDungeonBuilder::CreateCorridors()
 {
-	for (auto& Room : Rooms) {
-		for (auto& Door : Room.Doors) {
+	for (auto& Room : Rooms)
+	{
+		for (auto& Door : Room.Doors)
+		{
 			const FIntPoint& Direction = FDungeonDirections::AllDirections[Door.DirectionIndex];
 			int32 CorridorX = Door.Location.X + Direction.X;
 			int32 CorridorY = Door.Location.Y + Direction.Y;
@@ -381,23 +440,29 @@ void UGridDungeonBuilder::CreateCorridor(int32 I, int32 J, int32 LastDirection)
 {
 	int32 CorridorX = I;
 	int32 CorridorY = J;
-	if (!IsCoordsValid(CorridorX, CorridorY)) {
+	if (!IsCoordsValid(CorridorX, CorridorY))
+	{
 		return;
 	}
 
 	int32& StartCell = DungeonGrid[CorridorX][CorridorY];
-	if (StartCell & DUNGEON_CORRIDOR) {
+	if (StartCell & DUNGEON_CORRIDOR)
+	{
 		return;
 	}
-	int32 DirectionIndex = FMath::FRand() < BuilderConfig.ChangeDirectionChance ? FDungeonDirections::GetRandomDirectionIndex() : LastDirection;
+	int32 DirectionIndex =
+		FMath::FRand() < BuilderConfig.ChangeDirectionChance ? FDungeonDirections::GetRandomDirectionIndex() : LastDirection;
 
-	for (int32 Row = 0; Row < FDungeonDirections::NumDirections; ++Row, ++DirectionIndex) {
+	for (int32 Row = 0; Row < FDungeonDirections::NumDirections; ++Row, ++DirectionIndex)
+	{
 		DirectionIndex %= FDungeonDirections::NumDirections;
 		const FIntPoint& Direction = FDungeonDirections::AllDirections[DirectionIndex];
-		if (!CheckCorridor(CorridorX, CorridorY, Direction)) {
+		if (!CheckCorridor(CorridorX, CorridorY, Direction))
+		{
 			continue;
 		}
-		for (int32 N = 0; N < 2; ++N) {
+		for (int32 N = 0; N < 2; ++N)
+		{
 			int32& Data = DungeonGrid[CorridorX][CorridorY];
 			Data |= DUNGEON_CORRIDOR;
 			CorridorX += Direction.X;
@@ -406,21 +471,25 @@ void UGridDungeonBuilder::CreateCorridor(int32 I, int32 J, int32 LastDirection)
 		CreateCorridor(CorridorX, CorridorY, DirectionIndex);
 	}
 
-	if (!(StartCell & DUNGEON_CORRIDOR)) {
+	if (!(StartCell & DUNGEON_CORRIDOR))
+	{
 		StartCell &= ~ROOM_ENTRANCE;
 	}
 }
 
 bool UGridDungeonBuilder::CheckCorridor(int32 CorridorX, int32 CorridorY, const FIntPoint& Direction)
 {
-	for (int32 I = 1; I < 3; ++I) {
+	for (int32 I = 1; I < 3; ++I)
+	{
 		int32 X = CorridorX + Direction.X * I;
 		int32 Y = CorridorY + Direction.Y * I;
-		if (!IsCoordsValid(X, Y)) {
+		if (!IsCoordsValid(X, Y))
+		{
 			return false;
 		}
 		int32& Data = DungeonGrid[X][Y];
-		if (Data & BLOCK_CORRIDOR) {
+		if (Data & BLOCK_CORRIDOR)
+		{
 			return false;
 		}
 	}
@@ -429,9 +498,11 @@ bool UGridDungeonBuilder::CheckCorridor(int32 CorridorX, int32 CorridorY, const 
 
 void UGridDungeonBuilder::RemoveDeadEnds()
 {
-	for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
-		for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J) {
-			CollapseCorridor(I, J);			
+	for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I)
+	{
+		for (int32 J = 0; J < BuilderConfig.DungeonHeight; ++J)
+		{
+			CollapseCorridor(I, J);
 		}
 	}
 }
@@ -439,22 +510,27 @@ void UGridDungeonBuilder::RemoveDeadEnds()
 void UGridDungeonBuilder::CollapseCorridor(int32 I, int32 J)
 {
 	int32& CurrentCell = DungeonGrid[I][J];
-	if (!(CurrentCell & DUNGEON_CORRIDOR)) {
+	if (!(CurrentCell & DUNGEON_CORRIDOR))
+	{
 		return;
 	}
 
 	int32 NumWays = 0;
 	FIntPoint Way(0, 0);
-	if (CurrentCell & ROOM_ENTRANCE) {
+	if (CurrentCell & ROOM_ENTRANCE)
+	{
 		++NumWays;
 	}
 
-	for (auto& Direction : FDungeonDirections::AllDirections) {
+	for (auto& Direction : FDungeonDirections::AllDirections)
+	{
 		int32 Row = I + Direction.X;
 		int32 Col = J + Direction.Y;
-		if (Row >= 0 && Row < BuilderConfig.DungeonWidth && Col >= 0 && Col < BuilderConfig.DungeonHeight) {
-			int32 &Cell = DungeonGrid[Row][Col];
-			if (Cell & DUNGEON_CORRIDOR) {
+		if (Row >= 0 && Row < BuilderConfig.DungeonWidth && Col >= 0 && Col < BuilderConfig.DungeonHeight)
+		{
+			int32& Cell = DungeonGrid[Row][Col];
+			if (Cell & DUNGEON_CORRIDOR)
+			{
 				++NumWays;
 				Way.X = Row;
 				Way.Y = Col;
@@ -462,10 +538,12 @@ void UGridDungeonBuilder::CollapseCorridor(int32 I, int32 J)
 		}
 	}
 
-	if (NumWays < 2) {
-		int32 &Cell = DungeonGrid[I][J];
+	if (NumWays < 2)
+	{
+		int32& Cell = DungeonGrid[I][J];
 		Cell &= ~(DUNGEON_CORRIDOR | ROOM_ENTRANCE | ROOM_WINDOW);
-		if (NumWays == 1) {
+		if (NumWays == 1)
+		{
 			CollapseCorridor(Way.X, Way.Y);
 		}
 	}
@@ -474,25 +552,32 @@ void UGridDungeonBuilder::CollapseCorridor(int32 I, int32 J)
 void UGridDungeonBuilder::PrintDungeon()
 {
 	int32 Index = 0;
-	for (int32 J = BuilderConfig.DungeonHeight - 1; J >= 0; --J) {
+	for (int32 J = BuilderConfig.DungeonHeight - 1; J >= 0; --J)
+	{
 		FString DungeonRow;
-		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I) {
+		for (int32 I = 0; I < BuilderConfig.DungeonWidth; ++I)
+		{
 			int32 Data = DungeonGrid[I][J];
 			int8 C = ' ';
 
-			if (Data & ROOM_ENTRANCE) {
+			if (Data & ROOM_ENTRANCE)
+			{
 				C = 'E';
 			}
-			else if (Data & DUNGEON_CORRIDOR) {
+			else if (Data & DUNGEON_CORRIDOR)
+			{
 				C = '+';
 			}
-			else if (Data & ROOM_DOOR) {
+			else if (Data & ROOM_DOOR)
+			{
 				C = 'D';
 			}
-			else if (Data & ROOM_WINDOW) {
+			else if (Data & ROOM_WINDOW)
+			{
 				C = 'W';
 			}
-			else if (Data & DUNGEON_ROOM) {
+			else if (Data & DUNGEON_ROOM)
+			{
 				C = '-';
 			}
 			DungeonRow.Append(FString::Printf(TEXT("%c"), C));

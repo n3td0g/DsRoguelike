@@ -1,17 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Dungeon/Dungeon.h"
-#include "Editor/DungeonTemplate.h"
+
 #include "Dungeon/DungeonBuilder.h"
+#include "Dungeon/DungeonMarker.h"
+#include "Dungeon/Emitters/MarkerEmitter.h"
+#include "Editor/DungeonTemplate.h"
 #include "Editor/MarkerNode.h"
 #include "Editor/VisualNode.h"
-#include "Dungeon/Emitters/MarkerEmitter.h"
-#include "Dungeon/DungeonMarker.h"
 
 // Sets default values
 ADungeon::ADungeon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	BuilderClass = UDungeonBuilder::StaticClass();
@@ -26,27 +27,34 @@ ADungeon::ADungeon()
 void ADungeon::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ADungeon::CreateDungeonVisual()
 {
-	if (Templates.Num() == 0) {
+	if (Templates.Num() == 0)
+	{
 		return;
 	}
 	auto Template = Templates[0];
-	if (!Template) {
+	if (!Template)
+	{
 		return;
 	}
 
-	for (auto& Marker : Builder->Markers) {
+	for (auto& Marker : Builder->Markers)
+	{
 		auto MarkerNodeRef = Template->MarkerNodes.Find(Marker.Key);
-		if (MarkerNodeRef) {
+		if (MarkerNodeRef)
+		{
 			auto MarkerNode = (*MarkerNodeRef);
-			if (MarkerNode) {
-				for (const auto& DungeonMarker : Marker.Value) {
-					for (auto VisualNode : MarkerNode->VisualNodes) {
-						if (VisualNode) {
+			if (MarkerNode)
+			{
+				for (const auto& DungeonMarker : Marker.Value)
+				{
+					for (auto VisualNode : MarkerNode->VisualNodes)
+					{
+						if (VisualNode)
+						{
 							VisualNode->Process(DungeonMarker.Transform, GWorld);
 						}
 					}
@@ -58,25 +66,31 @@ void ADungeon::CreateDungeonVisual()
 
 void ADungeon::CreateDungeon()
 {
-	if (!BuilderClass) {
+	if (!BuilderClass)
+	{
 		UE_LOG(LogTemp, Warning, TEXT("CreateDungeon: BuilderClass is null"));
 	}
 
-	if (!Builder) {
+	if (!Builder)
+	{
 		Builder = BuilderClass->GetDefaultObject<UDungeonBuilder>();
 	}
 
-	if (MarkerEmitters.Num() == 0) {
-		for (auto EmitterClass : MarkerEmitterClasses) {
-			if (EmitterClass) {
+	if (MarkerEmitters.Num() == 0)
+	{
+		for (auto EmitterClass : MarkerEmitterClasses)
+		{
+			if (EmitterClass)
+			{
 				MarkerEmitters.Push(EmitterClass->GetDefaultObject<UMarkerEmitter>());
 			}
 		}
 	}
-	
+
 	Builder->GenerateDungeon(this);
 
-	for (auto MarkerEmitter : MarkerEmitters) {
+	for (auto MarkerEmitter : MarkerEmitters)
+	{
 		MarkerEmitter->EmitMarkers(Builder, this);
 	}
 

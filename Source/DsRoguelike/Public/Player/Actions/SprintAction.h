@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Player/Actions/BaseAction.h"
+
 #include "SprintAction.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS(ClassGroup = (Actions), meta = (BlueprintSpawnableComponent))
 class DSROGUELIKE_API USprintAction : public UBaseAction
 {
 	GENERATED_BODY()
-	
-public:
 
+public:
 	virtual bool StartAction() override;
 
 	virtual bool ContinueAction() override;
@@ -23,11 +23,9 @@ public:
 	virtual bool StopAction(bool Force) override;
 
 	virtual void ActionTick(float DeltaTime) override;
-	
-protected:
 
+protected:
 private:
 	UPROPERTY(Transient)
 	class UCharacterMovementComponent* MovementComponent;
-	
 };

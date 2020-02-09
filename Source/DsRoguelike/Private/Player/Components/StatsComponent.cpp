@@ -17,10 +17,13 @@ void UStatsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 	float WorldTime = GetWorld()->TimeSeconds;
 
-	for (auto& StatsParameterPair : StatsParameters) {
+	for (auto& StatsParameterPair : StatsParameters)
+	{
 		auto& StatsParameter = StatsParameterPair.Value;
-		if (StatsParameter.Value < StatsParameter.MaxValue) {
-			if (StatsParameter.LastDamageTime + StatsParameter.RegenerationDelay > WorldTime) {
+		if (StatsParameter.Value < StatsParameter.MaxValue)
+		{
+			if (StatsParameter.LastDamageTime + StatsParameter.RegenerationDelay > WorldTime)
+			{
 				continue;
 			}
 			float RegeneratedValue = StatsParameter.Value + StatsParameter.RegenerationSpeed * DeltaTime;
@@ -32,7 +35,8 @@ void UStatsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 void UStatsComponent::GetStatsParameter(EStatsParameterType Type, FStatsParameter& Parameter)
 {
 	auto ParameterFound = StatsParameters.Find(Type);
-	if (ParameterFound) {
+	if (ParameterFound)
+	{
 		Parameter = *ParameterFound;
 	}
 }
@@ -40,7 +44,8 @@ void UStatsComponent::GetStatsParameter(EStatsParameterType Type, FStatsParamete
 void UStatsComponent::ApplyDamage(EStatsParameterType Type, float Damage)
 {
 	auto ParameterFound = StatsParameters.Find(Type);
-	if (ParameterFound) {
+	if (ParameterFound)
+	{
 		ParameterFound->Value -= Damage;
 		ParameterFound->Value = FMath::Clamp(ParameterFound->Value, ParameterFound->MinValue, ParameterFound->MaxValue);
 		ParameterFound->LastDamageTime = GetWorld()->TimeSeconds;
@@ -50,5 +55,4 @@ void UStatsComponent::ApplyDamage(EStatsParameterType Type, float Damage)
 void UStatsComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 }

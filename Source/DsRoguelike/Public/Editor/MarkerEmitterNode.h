@@ -4,17 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+
 #include "MarkerEmitterNode.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class DSROGUELIKE_API UMarkerEmitterNode : public UObject
 {
 	GENERATED_BODY()
-	
-	
-	
-	
 };

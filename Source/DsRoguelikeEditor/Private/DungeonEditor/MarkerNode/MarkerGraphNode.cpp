@@ -15,7 +15,8 @@ void UMarkerGraphNode::AllocateDefaultPins()
 
 FText UMarkerGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (MarkerNode) {
+	if (MarkerNode)
+	{
 		return FText::FromName(MarkerNode->MarkerName);
 	}
 	return FText::FromString(TEXT("Marker"));
@@ -30,20 +31,25 @@ void UMarkerGraphNode::PinConnectionListChanged(UEdGraphPin * Pin)
 {
 	Super::PinConnectionListChanged(Pin);
 
-	if (!MarkerNode) {
+	if (!MarkerNode)
+	{
 		return;
 	}
 
-	if (!Pin) {
+	if (!Pin)
+	{
 		return;
 	}
 
 	MarkerNode->VisualNodes.Empty();
 
-	for (auto Link: Pin->LinkedTo) {
-		if (Link) {
+	for (auto Link: Pin->LinkedTo)
+	{
+		if (Link)
+		{
 			auto VisualNode = Cast<UVisualGraphNode>(Link->GetOwningNode());
-			if (VisualNode) {
+			if (VisualNode)
+			{
 				MarkerNode->VisualNodes.Push(VisualNode->VisualNode);
 			}
 		}
@@ -61,10 +67,13 @@ void UMarkerGraphNode::DestroyNode()
 
 	auto ParrentGraph = Cast<UEdGraph_DungeonTemplate>(GetGraph());
 
-	if (ParrentGraph) {
+	if (ParrentGraph)
+	{
 		UDungeonTemplate* DungeonTemplate = ParrentGraph->GetDungeonTemplate();
-		if (DungeonTemplate) {
-			if (DungeonTemplate->MarkerNodes.Contains(MarkerNode->MarkerName)) {
+		if (DungeonTemplate)
+		{
+			if (DungeonTemplate->MarkerNodes.Contains(MarkerNode->MarkerName))
+			{
 				DungeonTemplate->MarkerNodes.Remove(MarkerNode->MarkerName);
 			}
 		}

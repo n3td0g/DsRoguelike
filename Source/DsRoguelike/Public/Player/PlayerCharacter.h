@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "PlayerAction.h"
+
 #include "PlayerCharacter.generated.h"
 
 class UAnimMontage;
@@ -16,13 +17,19 @@ UCLASS()
 class DSROGUELIKE_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
-	
+
 public:
 	APlayerCharacter();
 
 public:
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const
+	{
+		return CameraBoom;
+	}
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const
+	{
+		return FollowCamera;
+	}
 
 	UFUNCTION(BlueprintCallable)
 	void CurrentActionEnded();
@@ -35,7 +42,8 @@ public:
 
 	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 	virtual void BeginPlay() override;
-	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	virtual float TakeDamage(
+		float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintCallable)
 	bool IsBackstabAvailable(const FVector& Location, const FVector& Direction);
@@ -48,12 +56,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsHitBlocked(const FVector& Direction);
+
 public:
 	UPROPERTY(BlueprintReadWrite)
 	ULookTargetComponent* Target;
 
 	UPROPERTY(BlueprintReadWrite)
-	ABaseMeleeWeapon *Weapon;
+	ABaseMeleeWeapon* Weapon;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Stats)
 	float StaminaToAttack = 23.0f;
@@ -68,7 +77,7 @@ public:
 	float StaminaToJump = 5.0f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
-	TSubclassOf<ABaseMeleeWeapon> WeaponClass;	
+	TSubclassOf<ABaseMeleeWeapon> WeaponClass;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
 	FName WeaponSocket = TEXT("RightWeapon");
@@ -186,11 +195,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Kick)
 	float KickDamage = 10.0f;
-	
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TEnumAsByte<ETraceTypeQuery> BackstabTraceType;
+
 protected:
-	//Weapon
+	// Weapon
 	UFUNCTION(BlueprintCallable)
 	void StartAttack();
 
@@ -198,7 +208,7 @@ protected:
 	void StopAttack();
 
 	void CreateWeapon();
-	//Input
+	// Input
 	void ApplyMovementInput();
 
 	UFUNCTION(BlueprintCallable)
@@ -234,7 +244,7 @@ protected:
 	void CriticalAttack(bool IsBackstab);
 	APlayerCharacter* TryToCriticalAttack(FHitResult& HitResult, bool& IsBackstab);
 
-	//Stun lock
+	// Stun lock
 	void StunLock();
 
 	bool TryToKick();
@@ -243,7 +253,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void Stagger();
 
-	//Actions
+	// Actions
 	void SetCurrentAction(EActionType ActionType);
 	bool TryToSetMontage(UAnimMontage* NewMontage);
 
@@ -258,7 +268,7 @@ protected:
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	template<typename TEnum>
+	template <typename TEnum>
 	static FORCEINLINE FString GetEnumValueAsString(const FString& Name, TEnum Value)
 	{
 		const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, *Name, true);
@@ -266,7 +276,7 @@ protected:
 		{
 			return FString("Invalid");
 		}
-		return enumPtr->GetNameByValue((int64)Value).ToString();
+		return enumPtr->GetNameByValue((int64) Value).ToString();
 	}
 
 protected:
@@ -290,6 +300,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	float MovementScale = 1.0f;
+
 private:
 	UPROPERTY(Transient)
 	float LastIdleTime = 0.0f;
@@ -298,7 +309,7 @@ private:
 	int32 CurrentAttackSection = 0;
 
 	UPROPERTY(Transient)
-	FVector2D InputVector;	
+	FVector2D InputVector;
 
 	UPROPERTY(Transient)
 	float TargetMovementScale = 1.0f;
@@ -310,5 +321,5 @@ private:
 	float RunKeyHoldTime = 0.0;
 
 	UPROPERTY(Transient)
-	TArray<FPlayerAction> ActionsMemory;	
+	TArray<FPlayerAction> ActionsMemory;
 };

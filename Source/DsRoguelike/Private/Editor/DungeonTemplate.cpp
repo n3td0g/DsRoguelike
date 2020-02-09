@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Editor/DungeonTemplate.h"
+
 #include "Editor/MarkerNode.h"
 
 UDungeonTemplate::UDungeonTemplate()
@@ -12,7 +13,6 @@ UDungeonTemplate::UDungeonTemplate()
 
 UDungeonTemplate::~UDungeonTemplate()
 {
-
 }
 
 UMarkerNode* UDungeonTemplate::CreateMarkerNode()
@@ -33,9 +33,11 @@ FName UDungeonTemplate::GetFreeMarkerName()
 {
 	int32 Index = 0;
 	const TCHAR* DefaultMarkerName = TEXT("Marker%d");
-	while (true) {		
+	while (true)
+	{
 		FName NewMarkerName(*FString::Printf(DefaultMarkerName, Index));
-		if (!IsNameOccupied(NewMarkerName)) {
+		if (!IsNameOccupied(NewMarkerName))
+		{
 			return NewMarkerName;
 		}
 		++Index;
