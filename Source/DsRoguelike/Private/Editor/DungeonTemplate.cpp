@@ -32,10 +32,9 @@ bool UDungeonTemplate::IsNameOccupied(const FName& MarkerName)
 FName UDungeonTemplate::GetFreeMarkerName()
 {
 	int32 Index = 0;
-	const TCHAR* DefaultMarkerName = TEXT("Marker%d");
 	while (true)
 	{
-		FName NewMarkerName(*FString::Printf(DefaultMarkerName, Index));
+		FName NewMarkerName(*FString::Printf(TEXT("Marker%d"), Index));
 		if (!IsNameOccupied(NewMarkerName))
 		{
 			return NewMarkerName;

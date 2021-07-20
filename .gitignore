@@ -10,4 +10,6 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+*.idea
+*.vs
 Build
